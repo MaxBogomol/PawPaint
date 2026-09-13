@@ -20,5 +20,5 @@ tasks.named('run') {
 }
 
 application {
-    mainClass = "dev.maxbogomol.paw_paint.Main"
+    mainClass = "${group}.Main"
 }
