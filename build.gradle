@@ -1,0 +1,24 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+version = "${app_version}"
+group = 'dev.maxbogomol.paw_paint'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.java-gi:gtk:1.0.0-RC3'
+}
+
+
+tasks.named('run') {
+    jvmArgs += "--enable-native-access=ALL-UNNAMED"
+}
+
+application {
+    mainClass = "dev.maxbogomol.paw_paint.Main"
+}
