@@ -9,8 +9,14 @@ public class Main {
         Application app = new Application("dev.maxbogomol.paw_paint", ApplicationFlags.DEFAULT_FLAGS);
         app.onActivate(() -> {
             Window window = new ApplicationWindow(app);
-            window.setTitle("Paw Paint");
             window.setDefaultSize(400, 400);
+
+            HeaderBar headerBar = new HeaderBar();
+
+            Label titleLabel = new Label("Paw Paint");
+            headerBar.setTitleWidget(titleLabel);
+
+            window.setTitlebar(headerBar);
 
             Box box = new Box(Orientation.VERTICAL, 0);
             box.setHalign(Align.CENTER);
