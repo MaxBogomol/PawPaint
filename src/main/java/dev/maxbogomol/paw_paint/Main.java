@@ -31,11 +31,7 @@ public class Main {
 
             window.setChild(box);
 
-            Button button = Button.withLabel("hot gay sex");
-            box.append(button);
 
-            Button button1 = Button.withLabel("wiwi wawa");
-            box.append(button1);
 
             window.present();
         });
