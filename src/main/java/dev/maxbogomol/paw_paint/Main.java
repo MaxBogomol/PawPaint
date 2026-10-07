@@ -1,7 +1,7 @@
 package dev.maxbogomol.paw_paint;
 
-import org.gnome.gtk.*;
 import org.gnome.gio.ApplicationFlags;
+import org.gnome.gtk.*;
 
 public class Main {
 
@@ -9,11 +9,18 @@ public class Main {
         Application app = new Application("dev.maxbogomol.paw_paint", ApplicationFlags.DEFAULT_FLAGS);
         app.onActivate(() -> {
             Window window = new ApplicationWindow(app);
+            window.setTitle("Paw Paint");
             window.setDefaultSize(400, 400);
+
+            //Gtk.styleContextAddProviderForDisplay(Objects.requireNonNull(Display.getDefault()),
+            //        cssProvider,
+            //        Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+            //);
 
             HeaderBar headerBar = new HeaderBar();
 
             Label titleLabel = new Label("Paw Paint");
+            titleLabel.addCssClass("title");
             headerBar.setTitleWidget(titleLabel);
 
             window.setTitlebar(headerBar);
