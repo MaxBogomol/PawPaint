@@ -31,9 +31,30 @@ public class Main {
 
             window.setChild(box);
 
-
-
             window.present();
+
+            Window window1 = new ApplicationWindow(app);
+            window1.setTitle("WAWA");
+            window1.setDefaultSize(200, 200);
+
+            HeaderBar headerBar1 = new HeaderBar();
+
+            Label titleLabel1 = new Label("WAWA");
+            titleLabel1.addCssClass("title");
+            headerBar1.setTitleWidget(titleLabel1);
+            headerBar1.setShowTitleButtons(false);
+
+            window1.setTitlebar(headerBar1);
+
+            Box box1 = new Box(Orientation.VERTICAL, 0);
+            box1.setHalign(Align.CENTER);
+            box1.setValign(Align.CENTER);
+
+            window1.setChild(box1);
+
+            window1.setTransientFor(window);
+
+            window1.present();
         });
         app.run(args);
     }
