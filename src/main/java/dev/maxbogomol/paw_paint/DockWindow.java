@@ -13,6 +13,7 @@ public class DockWindow {
     private final Label titleLabel;
     private final HeaderBar headerBar;
     private final Button icon;
+    private final Button button;
     private final Stack stack;
     private final ScrolledWindow scrolledBar;
 
@@ -22,6 +23,8 @@ public class DockWindow {
 
         icon = Button.fromIconName("edit-cut-symbolic");
         icon.setCanTarget(false);
+
+        button = Button.fromIconName("document-properties-symbolic");
 
         stack = new Stack();
 
@@ -36,6 +39,7 @@ public class DockWindow {
         headerBar = new HeaderBar();
         headerBar.setTitleWidget(titleLabel);
         headerBar.packStart(icon);
+        headerBar.packEnd(button);
         headerBar.setShowTitleButtons(false);
 
         window = new Window();
@@ -62,8 +66,9 @@ public class DockWindow {
         if (empty) setActiveDockPanel(dockPanel);
 
         if (dockPanels.size() > 1) {
-            headerBar.setTitleWidget(scrolledBar);
+            headerBar.packStart(scrolledBar);
             icon.setVisible(false);
+            titleLabel.setVisible(false);
         }
 
         Label label = new Label();
