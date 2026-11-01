@@ -12,49 +12,26 @@ public class Main {
             window.setTitle("Paw Paint");
             window.setDefaultSize(400, 400);
 
-            //Gtk.styleContextAddProviderForDisplay(Objects.requireNonNull(Display.getDefault()),
-            //        cssProvider,
-            //        Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
-            //);
-
-            HeaderBar headerBar = new HeaderBar();
-
             Label titleLabel = new Label("Paw Paint");
             titleLabel.addCssClass("title");
+
+            HeaderBar headerBar = new HeaderBar();
             headerBar.setTitleWidget(titleLabel);
 
             window.setTitlebar(headerBar);
-
-            Box box = new Box(Orientation.VERTICAL, 0);
-            box.setHalign(Align.CENTER);
-            box.setValign(Align.CENTER);
-
-            window.setChild(box);
-
             window.present();
 
-            Window window1 = new ApplicationWindow(app);
-            window1.setTitle("WAWA");
-            window1.setDefaultSize(200, 200);
+            DockWindow dockWindow1 = new DockWindow(window);
+            DockWindow dockWindow2 = new DockWindow(window);
+            DockWindow dockWindow3 = new DockWindow(window);
 
-            HeaderBar headerBar1 = new HeaderBar();
-
-            Label titleLabel1 = new Label("WAWA");
-            titleLabel1.addCssClass("title");
-            headerBar1.setTitleWidget(titleLabel1);
-            headerBar1.setShowTitleButtons(false);
-
-            window1.setTitlebar(headerBar1);
-
-            Box box1 = new Box(Orientation.VERTICAL, 0);
-            box1.setHalign(Align.CENTER);
-            box1.setValign(Align.CENTER);
-
-            window1.setChild(box1);
-
-            window1.setTransientFor(window);
-
-            window1.present();
+            dockWindow1.addDockPanel(new DockPanel("test1"));
+            dockWindow1.addDockPanel(new DockPanel("test2"));
+            dockWindow1.addDockPanel(new DockPanel("test3"));
+            dockWindow1.addDockPanel(new DockPanel("test4"));
+            dockWindow2.addDockPanel(new DockPanel("test5"));
+            dockWindow2.addDockPanel(new DockPanel("test6"));
+            dockWindow3.addDockPanel(new DockPanel("test7"));
         });
         app.run(args);
     }
