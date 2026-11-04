@@ -6,8 +6,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DockWindow {
-    private final List<DockPanel> dockPanels = new ArrayList<>();
-    private DockPanel activeDockPanel;
+    private final List<IDockPanel> dockPanels = new ArrayList<>();
+    private IDockPanel activeDockPanel;
 
     private final Window window;
     private final Label titleLabel;
@@ -27,6 +27,7 @@ public class DockWindow {
         button = Button.fromIconName("document-properties-symbolic");
 
         stack = new Stack();
+        stack.setTransitionType(StackTransitionType.SLIDE_LEFT_RIGHT);
 
         StackSwitcher stackSwitcher = new StackSwitcher();
         stackSwitcher.setStack(stack);
@@ -44,6 +45,7 @@ public class DockWindow {
 
         window = new Window();
         window.setTitlebar(headerBar);
+        window.setChild(stack);
         window.setTransientFor(mainWindow);
         window.present();
 
@@ -59,7 +61,7 @@ public class DockWindow {
         return dockPanels.isEmpty();
     }
 
-    public void addDockPanel(DockPanel dockPanel) {
+    public void addDockPanel(IDockPanel dockPanel) {
         boolean empty = isEmpty();
         dockPanels.add(dockPanel);
 
@@ -71,13 +73,12 @@ public class DockWindow {
             titleLabel.setVisible(false);
         }
 
-        Label label = new Label();
-        StackPage stackPage = stack.addChild(label);
+        StackPage stackPage = stack.addChild(dockPanel.getWidget());
         stackPage.setTitle(dockPanel.getTitle());
         stackPage.setIconName("edit-cut-symbolic");
     }
 
-    public void setActiveDockPanel(DockPanel dockPanel) {
+    public void setActiveDockPanel(IDockPanel dockPanel) {
         activeDockPanel = dockPanel;
         setTitle(dockPanel.getTitle());
     }

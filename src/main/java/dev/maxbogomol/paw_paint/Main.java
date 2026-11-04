@@ -25,13 +25,13 @@ public class Main {
             DockWindow dockWindow2 = new DockWindow(window);
             DockWindow dockWindow3 = new DockWindow(window);
 
-            dockWindow1.addDockPanel(new DockPanel("test1"));
-            dockWindow1.addDockPanel(new DockPanel("test2"));
-            dockWindow1.addDockPanel(new DockPanel("test3"));
-            dockWindow1.addDockPanel(new DockPanel("test4"));
-            dockWindow2.addDockPanel(new DockPanel("test5"));
-            dockWindow2.addDockPanel(new DockPanel("test6"));
-            dockWindow3.addDockPanel(new DockPanel("test7"));
+            dockWindow1.addDockPanel(new SimpleDockPanel("test1"));
+            dockWindow1.addDockPanel(new SimpleDockPanel("test2"));
+            dockWindow1.addDockPanel(new SimpleDockPanel("test3"));
+            dockWindow1.addDockPanel(new SimpleDockPanel("test4"));
+            dockWindow2.addDockPanel(new SimpleDockPanel("test5"));
+            dockWindow2.addDockPanel(new SimpleDockPanel("test6"));
+            dockWindow3.addDockPanel(new SimpleDockPanel("test7"));
         });
         app.run(args);
     }
