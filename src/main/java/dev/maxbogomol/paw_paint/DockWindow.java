@@ -32,8 +32,10 @@ public class DockWindow {
 
         icon = Button.fromIconName("edit-cut-symbolic");
         icon.addCssClass("circular");
+        icon.addCssClass("flat");
 
         button = Button.fromIconName("document-properties-symbolic");
+        button.addCssClass("flat");
 
         stack = new Stack();
         stack.setTransitionType(StackTransitionType.SLIDE_LEFT_RIGHT);
@@ -43,11 +45,15 @@ public class DockWindow {
         headerBar.packStart(icon);
 
         Box bar = new Box(Orientation.HORIZONTAL, 0);
+        bar.setMarginStart(5);
+        bar.setMarginEnd(5);
+        bar.setMarginTop(5);
+        bar.setMarginBottom(5);
 
-        barTabs = new Box();
-        barTabs.setOrientation(Orientation.HORIZONTAL);
+        barTabs = new Box(Orientation.HORIZONTAL, 0);
         barTabs.setHalign(Align.START);
         barTabs.setHexpand(true);
+        barTabs.addCssClass("linked");
 
         scrolledBar = new ScrolledWindow();
         scrolledBar.setChild(barTabs);
