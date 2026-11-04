@@ -6,10 +6,10 @@ public interface IDockPanel {
 
     default String getTitle() {
         return "Dock panel";
-    };
+    }
 
     Widget getWidget();
 
-    default void dock(DockWindow dockWindow) {};
-    default void undock(DockWindow dockWindow) {};
+    default void dock(DockWindow dockWindow) {}
+    default void undock(DockWindow dockWindow) {}
 }

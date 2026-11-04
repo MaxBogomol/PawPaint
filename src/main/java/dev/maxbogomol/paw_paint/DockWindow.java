@@ -1,6 +1,7 @@
 package dev.maxbogomol.paw_paint;
 
 import org.gnome.gtk.*;
+import org.gnome.pango.EllipsizeMode;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,9 +21,9 @@ public class DockWindow {
     public DockWindow(Window mainWindow) {
         titleLabel = new Label();
         titleLabel.addCssClass("title");
+        titleLabel.setEllipsize(EllipsizeMode.END);
 
         icon = Button.fromIconName("edit-cut-symbolic");
-        icon.setCanTarget(false);
 
         button = Button.fromIconName("document-properties-symbolic");
 
@@ -36,10 +37,12 @@ public class DockWindow {
         scrolledBar.setChild(stackSwitcher);
         scrolledBar.setPolicy(PolicyType.AUTOMATIC, PolicyType.NEVER);
         scrolledBar.setPropagateNaturalWidth(true);
+        scrolledBar.setVisible(false);
 
         headerBar = new HeaderBar();
         headerBar.setTitleWidget(titleLabel);
         headerBar.packStart(icon);
+        headerBar.packStart(scrolledBar);
         headerBar.packEnd(button);
         headerBar.setShowTitleButtons(false);
 
@@ -55,20 +58,17 @@ public class DockWindow {
     private void setTitle(String title) {
         window.setTitle(title);
         titleLabel.setText(title);
+        icon.setTooltipMarkup(title);
     }
-
-    public boolean isEmpty() {
-        return dockPanels.isEmpty();
-    }
-
+    
     public void addDockPanel(IDockPanel dockPanel) {
-        boolean empty = isEmpty();
+        boolean empty = dockPanels.isEmpty();
         dockPanels.add(dockPanel);
 
         if (empty) setActiveDockPanel(dockPanel);
 
         if (dockPanels.size() > 1) {
-            headerBar.packStart(scrolledBar);
+            scrolledBar.setVisible(true);
             icon.setVisible(false);
             titleLabel.setVisible(false);
         }
