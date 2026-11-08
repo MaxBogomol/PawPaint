@@ -81,10 +81,29 @@ public class DockWindow {
         dropTarget.onDrop((value, x, y) -> {
             if (value != null) {
                 if (value.getObject() instanceof TabButton tabButton) {
-                    tabButton.dockWindow.removeDockPanel(tabButton.dockPanel);
-                    addDockPanel(tabButton.dockPanel);
+                    DockWindow dockWindow = tabButton.dockWindow;
+                    IDockPanel dockPanel = tabButton.dockPanel;
+                    int width = barTabs.getWidth();
+                    int size = dockWindow.getDockPanels().size();
+
+                    int index = (int) Math.round(x / width * size);
+                    boolean add = true;
+
+                    if (dockWindow == this) {
+                        int oldIndex = dockPanels.indexOf(dockPanel);
+                        if (oldIndex < index) index--;
+                        index = Math.clamp(index, 0, dockPanels.size() - 1);
+
+                        if (dockPanels.size() == 1) add = false;
+                    }
+
+                    if (add) {
+                        dockWindow.removeDockPanel(dockPanel);
+                        addDockPanel(dockPanel, index);
+                        setActiveDockPanel(dockPanel);
+                    }
+                    return true;
                 }
-                return true;
             }
             return false;
         });
@@ -98,24 +117,41 @@ public class DockWindow {
         icon.setTooltipMarkup(title);
     }
 
+    public List<IDockPanel> getDockPanels() {
+        return dockPanels;
+    }
+
     public void addDockPanel(IDockPanel dockPanel) {
         boolean empty = dockPanels.isEmpty();
         dockPanels.add(dockPanel);
 
+        addTabButton(dockPanel);
+
         if (empty) setActiveDockPanel(dockPanel);
+    }
 
-        stack.addChild(dockPanel.getWidget());
+    public void addDockPanel(IDockPanel dockPanel, int index) {
+        boolean empty = dockPanels.isEmpty();
+        if (empty) {
+            dockPanels.add(dockPanel);
+            addTabButton(dockPanel);
+        } else {
+            dockPanels.add(index, dockPanel);
+            createTabButtons();
+        }
 
-        addTabButton(dockPanel, dockPanels.size() - 1);
+        if (empty) setActiveDockPanel(dockPanel);
     }
 
     public void removeDockPanel(IDockPanel dockPanel) {
         dockPanels.remove(dockPanel);
-
         stack.remove(dockPanel.getWidget());
 
         if (!dockPanels.isEmpty()) {
             createTabButtons();
+            if (activeDockPanel == dockPanel) {
+                setActiveDockPanel(dockPanels.get(0));
+            }
         } else {
             window.close();
         }
@@ -127,12 +163,15 @@ public class DockWindow {
         setTitle(dockPanel.getTitle());
     }
 
-    private void addTabButton(IDockPanel dockPanel, int id) {
+    private void addTabButton(IDockPanel dockPanel) {
+        stack.addChild(dockPanel.getWidget());
+
         TabButton tabButton = new TabButton();
         tabButton.setIconName("edit-cut-symbolic");
+        tabButton.setTooltipText(dockPanel.getTitle());
+
         tabButton.dockWindow = this;
         tabButton.dockPanel = dockPanel;
-        tabButton.id = id;
 
         barTabs.append(tabButton);
 
@@ -158,11 +197,12 @@ public class DockWindow {
 
         dragSource.onDragEnd((drag, success) -> {
             if (!success) {
-                tabButton.unparent();
-                removeDockPanel(dockPanel);
+                if (dockPanels.size() > 1) {
+                    removeDockPanel(dockPanel);
 
-                DockWindow newWindow = new DockWindow(this.mainWindow);
-                newWindow.addDockPanel(dockPanel);
+                    DockWindow newWindow = new DockWindow(this.mainWindow);
+                    newWindow.addDockPanel(dockPanel);
+                }
 
                 if (drag != null) {
                     drag.dropDone(true);
@@ -179,10 +219,12 @@ public class DockWindow {
             barTabs.remove(child);
         }
 
-        int i = 0;
+        while ((child = stack.getFirstChild()) != null) {
+            stack.remove(child);
+        }
+
         for (IDockPanel dockPanel : dockPanels) {
-            addTabButton(dockPanel, i);
-            i++;
+            addTabButton(dockPanel);
         }
     }
 }
