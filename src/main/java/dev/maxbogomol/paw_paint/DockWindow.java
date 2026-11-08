@@ -68,6 +68,7 @@ public class DockWindow {
         box.append(stack);
 
         window = new Window();
+        window.setDefaultSize(200, 200);
         window.setTitlebar(headerBar);
         window.setChild(box);
         window.setTransientFor(mainWindow);
@@ -78,7 +79,13 @@ public class DockWindow {
         DropTarget dropTarget = new DropTarget(Button.getType(), DragAction.MOVE);
 
         dropTarget.onDrop((value, x, y) -> {
-            System.out.println(value + " x: " + x + " y: " + y);
+            if (value != null) {
+                if (value.getObject() instanceof TabButton tabButton) {
+                    tabButton.dockWindow.removeDockPanel(tabButton.dockPanel);
+                    addDockPanel(tabButton.dockPanel);
+                }
+                return true;
+            }
             return false;
         });
 
@@ -99,12 +106,38 @@ public class DockWindow {
 
         stack.addChild(dockPanel.getWidget());
 
-        Button tabButton = Button.fromIconName("edit-cut-symbolic");
+        addTabButton(dockPanel, dockPanels.size() - 1);
+    }
+
+    public void removeDockPanel(IDockPanel dockPanel) {
+        dockPanels.remove(dockPanel);
+
+        stack.remove(dockPanel.getWidget());
+
+        if (!dockPanels.isEmpty()) {
+            createTabButtons();
+        } else {
+            window.close();
+        }
+    }
+
+    public void setActiveDockPanel(IDockPanel dockPanel) {
+        activeDockPanel = dockPanel;
+        stack.setVisibleChild(dockPanel.getWidget());
+        setTitle(dockPanel.getTitle());
+    }
+
+    private void addTabButton(IDockPanel dockPanel, int id) {
+        TabButton tabButton = new TabButton();
+        tabButton.setIconName("edit-cut-symbolic");
+        tabButton.dockWindow = this;
+        tabButton.dockPanel = dockPanel;
+        tabButton.id = id;
 
         barTabs.append(tabButton);
 
         tabButton.onClicked(() -> {
-            stack.setVisibleChild(dockPanel.getWidget());
+            setActiveDockPanel(dockPanel);
         });
 
         DragSource dragSource = new DragSource();
@@ -126,7 +159,7 @@ public class DockWindow {
         dragSource.onDragEnd((drag, success) -> {
             if (!success) {
                 tabButton.unparent();
-                stack.remove(dockPanel.getWidget());
+                removeDockPanel(dockPanel);
 
                 DockWindow newWindow = new DockWindow(this.mainWindow);
                 newWindow.addDockPanel(dockPanel);
@@ -140,8 +173,16 @@ public class DockWindow {
         tabButton.addController(dragSource);
     }
 
-    public void setActiveDockPanel(IDockPanel dockPanel) {
-        activeDockPanel = dockPanel;
-        setTitle(dockPanel.getTitle());
+    private void createTabButtons() {
+        Widget child;
+        while ((child = barTabs.getFirstChild()) != null) {
+            barTabs.remove(child);
+        }
+
+        int i = 0;
+        for (IDockPanel dockPanel : dockPanels) {
+            addTabButton(dockPanel, i);
+            i++;
+        }
     }
 }
