@@ -1,17 +1,23 @@
 package dev.maxbogomol.paw_paint;
 
-import org.gnome.gtk.Label;
-import org.gnome.gtk.Widget;
+import org.gnome.gtk.*;
 
 public class SimpleDockPanel implements IDockPanel {
     private final String title;
     private final String icon;
+    private final Box box;
     private final Label label;
 
     public SimpleDockPanel(String title, String icon) {
         this.title = title;
         this.icon = icon;
-        this.label = new Label(title);
+        label = new Label(title);
+        box = new Box(Orientation.HORIZONTAL, 0);
+        box.setHalign(Align.CENTER);
+        box.setValign(Align.CENTER);
+        box.setHexpand(true);
+        box.setVexpand(true);
+        box.append(label);
     }
 
     public SimpleDockPanel(String title) {
@@ -34,6 +40,6 @@ public class SimpleDockPanel implements IDockPanel {
 
     @Override
     public Widget getWidget() {
-        return label;
+        return box;
     }
 }

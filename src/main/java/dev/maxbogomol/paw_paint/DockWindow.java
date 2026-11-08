@@ -33,8 +33,8 @@ public class DockWindow {
         this.mainWindow = mainWindow;
 
         titleLabel = new Label();
-        titleLabel.addCssClass("title");
         titleLabel.setEllipsize(EllipsizeMode.END);
+        titleLabel.addCssClass("title");
 
         icon = Button.fromIconName("edit-cut-symbolic");
         icon.addCssClass("circular");
@@ -45,6 +45,8 @@ public class DockWindow {
         headerBar.packStart(icon);
 
         settingsButton = Button.fromIconName("document-properties-symbolic");
+        settingsButton.setHalign(Align.CENTER);
+        settingsButton.setValign(Align.CENTER);
         settingsButton.addCssClass("flat");
 
         stack = new Stack();
@@ -54,8 +56,6 @@ public class DockWindow {
         barBox.addCssClass("pawpaint-tabs-bar");
 
         tabsBarBox = new Box(Orientation.HORIZONTAL, 0);
-        tabsBarBox.setHalign(Align.START);
-        tabsBarBox.setHexpand(true);
         tabsBarBox.addCssClass("linked");
 
         DropTarget dropTarget = new DropTarget(DockTabButton.getType(), DragAction.MOVE);
@@ -64,8 +64,6 @@ public class DockWindow {
 
         scrolledTabsBar = new ScrolledWindow();
         scrolledTabsBar.setChild(tabsBarBox);
-        scrolledTabsBar.setPolicy(PolicyType.AUTOMATIC, PolicyType.NEVER);
-        scrolledTabsBar.setPropagateNaturalWidth(true);
 
         settingsBox = new Box(Orientation.HORIZONTAL, 0);
         settingsBox.append(settingsButton);
@@ -74,8 +72,6 @@ public class DockWindow {
         barBox.append(settingsBox);
 
         mainBox = new Box(Orientation.VERTICAL, 0);
-        mainBox.append(barBox);
-        mainBox.append(stack);
 
         window = new Window();
         window.setDefaultSize(200, 200);
@@ -85,6 +81,58 @@ public class DockWindow {
         window.present();
 
         setTitle("Dock window");
+
+        setupBarOrientation(Orientation.HORIZONTAL);
+        setupBarPosition(true);
+
+        settingsButton.onClicked(() -> {
+            setupBarOrientation(Orientation.VERTICAL);
+            setupBarPosition(false);
+        });
+    }
+
+    private void setupBarOrientation(Orientation orientation) {
+        barBox.setOrientation(orientation);
+        tabsBarBox.setOrientation(orientation);
+
+        if (orientation == Orientation.HORIZONTAL) {
+            tabsBarBox.setHexpand(true);
+            tabsBarBox.setVexpand(false);
+            tabsBarBox.setHalign(Align.START);
+            tabsBarBox.setValign(Align.FILL);
+
+            scrolledTabsBar.setPolicy(PolicyType.AUTOMATIC, PolicyType.NEVER);
+
+            mainBox.setOrientation(Orientation.VERTICAL);
+        } else {
+            tabsBarBox.setHexpand(false);
+            tabsBarBox.setVexpand(true);
+            tabsBarBox.setHalign(Align.FILL);
+            tabsBarBox.setValign(Align.START);
+
+            scrolledTabsBar.setPolicy(PolicyType.NEVER, PolicyType.AUTOMATIC);
+
+            mainBox.setOrientation(Orientation.HORIZONTAL);
+        }
+    }
+
+    private void setupBarPosition(boolean front) {
+        barBox.unparent();
+        stack.unparent();
+
+        if (front) {
+            mainBox.append(barBox);
+            mainBox.append(stack);
+        } else {
+            mainBox.append(stack);
+            mainBox.append(barBox);
+        }
+    }
+
+    private void setTitle(String title) {
+        window.setTitle(title);
+        titleLabel.setText(title);
+        icon.setTooltipMarkup(title);
     }
 
     public void setActiveDockPanel(IDockPanel dockPanel) {
@@ -118,10 +166,10 @@ public class DockWindow {
 
     public void removeDockPanel(IDockPanel dockPanel) {
         dockPanels.remove(dockPanel);
-        stack.remove(dockPanel.getWidget());
+
+        recreateTabs();
 
         if (!dockPanels.isEmpty()) {
-            recreateTabs();
             if (activeDockPanel == dockPanel) {
                 setActiveDockPanel(dockPanels.getFirst());
             }
@@ -134,18 +182,14 @@ public class DockWindow {
         return dockPanels;
     }
 
-    private void setTitle(String title) {
-        window.setTitle(title);
-        titleLabel.setText(title);
-        icon.setTooltipMarkup(title);
-    }
-
     private void createTab(IDockPanel dockPanel) {
         stack.addChild(dockPanel.getWidget());
 
         DockTabButton tabButton = new DockTabButton();
         tabButton.setIconName(dockPanel.getIcon());
         tabButton.setTooltipText(dockPanel.getTitle());
+        tabButton.setHalign(Align.CENTER);
+        tabButton.setValign(Align.CENTER);
 
         tabButton.dockWindow = this;
         tabButton.dockPanel = dockPanel;
@@ -214,11 +258,14 @@ public class DockWindow {
                 DockWindow dockWindow = tabButton.dockWindow;
                 IDockPanel dockPanel = tabButton.dockPanel;
                 int width = tabsBarBox.getWidth();
+                int height = tabsBarBox.getHeight();
                 int size = getDockPanels().size();
-
-                int index = (int) Math.round(x / width * size);
-                index = Math.clamp(index, 0, size);
                 boolean add = true;
+
+                double pos = (tabsBarBox.getOrientation() == Orientation.HORIZONTAL) ? x : y;
+                double posTotal = (tabsBarBox.getOrientation() == Orientation.HORIZONTAL) ? width : height;
+                int index = (posTotal > 0) ? (int) Math.round(pos / posTotal * size) : 0;
+                index = Math.clamp(index, 0, size);
 
                 if (dockWindow == this) {
                     int oldIndex = dockPanels.indexOf(dockPanel);
