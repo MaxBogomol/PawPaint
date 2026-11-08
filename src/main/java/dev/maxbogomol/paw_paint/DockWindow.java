@@ -213,9 +213,10 @@ public class DockWindow {
                 DockWindow dockWindow = tabButton.dockWindow;
                 IDockPanel dockPanel = tabButton.dockPanel;
                 int width = tabsBarBox.getWidth();
-                int size = dockWindow.getDockPanels().size();
+                int size = getDockPanels().size();
 
                 int index = (int) Math.round(x / width * size);
+                index = Math.clamp(index, 0, size);
                 boolean add = true;
 
                 if (dockWindow == this) {
