@@ -1,6 +1,7 @@
 package dev.maxbogomol.paw_paint;
 
 import org.gnome.gdk.ContentProvider;
+import org.gnome.gdk.Drag;
 import org.gnome.gdk.DragAction;
 import org.gnome.gobject.Value;
 import org.gnome.gtk.*;
@@ -15,13 +16,18 @@ public class DockWindow {
 
     private final Window mainWindow;
     private final Window window;
-    private final Label titleLabel;
     private final HeaderBar headerBar;
+
+    private final Label titleLabel;
     private final Button icon;
-    private final Button button;
+    private final Button settingsButton;
+
+    private final Box barBox;
+    private final Box tabsBarBox;
+    private final Box settingsBox;
+    private final ScrolledWindow scrolledTabsBar;
     private final Stack stack;
-    private final ScrolledWindow scrolledBar;
-    private final Box barTabs;
+    private final Box mainBox;
 
     public DockWindow(Window mainWindow) {
         this.mainWindow = mainWindow;
@@ -34,98 +40,64 @@ public class DockWindow {
         icon.addCssClass("circular");
         icon.addCssClass("flat");
 
-        button = Button.fromIconName("document-properties-symbolic");
-        button.addCssClass("flat");
-
-        stack = new Stack();
-        stack.setTransitionType(StackTransitionType.SLIDE_LEFT_RIGHT);
-
         headerBar = new HeaderBar();
         headerBar.setTitleWidget(titleLabel);
         headerBar.packStart(icon);
 
-        Box bar = new Box(Orientation.HORIZONTAL, 0);
-        bar.addCssClass("pawpaint-bar");
+        settingsButton = Button.fromIconName("document-properties-symbolic");
+        settingsButton.addCssClass("flat");
 
-        barTabs = new Box(Orientation.HORIZONTAL, 0);
-        barTabs.setHalign(Align.START);
-        barTabs.setHexpand(true);
-        barTabs.addCssClass("linked");
+        stack = new Stack();
+        stack.setTransitionType(StackTransitionType.SLIDE_LEFT_RIGHT);
 
-        scrolledBar = new ScrolledWindow();
-        scrolledBar.setChild(barTabs);
-        scrolledBar.setPolicy(PolicyType.AUTOMATIC, PolicyType.NEVER);
-        scrolledBar.setPropagateNaturalWidth(true);
+        barBox = new Box(Orientation.HORIZONTAL, 0);
+        barBox.addCssClass("pawpaint-tabs-bar");
 
-        Box barButton = new Box(Orientation.HORIZONTAL, 0);
-        barButton.append(button);
+        tabsBarBox = new Box(Orientation.HORIZONTAL, 0);
+        tabsBarBox.setHalign(Align.START);
+        tabsBarBox.setHexpand(true);
+        tabsBarBox.addCssClass("linked");
 
-        bar.append(scrolledBar);
-        bar.append(barButton);
+        DropTarget dropTarget = new DropTarget(DockTabButton.getType(), DragAction.MOVE);
+        dropTarget.onDrop(this::onTabDrop);
+        tabsBarBox.addController(dropTarget);
 
-        Box box = new Box(Orientation.VERTICAL, 0);
-        box.append(bar);
-        box.append(stack);
+        scrolledTabsBar = new ScrolledWindow();
+        scrolledTabsBar.setChild(tabsBarBox);
+        scrolledTabsBar.setPolicy(PolicyType.AUTOMATIC, PolicyType.NEVER);
+        scrolledTabsBar.setPropagateNaturalWidth(true);
+
+        settingsBox = new Box(Orientation.HORIZONTAL, 0);
+        settingsBox.append(settingsButton);
+
+        barBox.append(scrolledTabsBar);
+        barBox.append(settingsBox);
+
+        mainBox = new Box(Orientation.VERTICAL, 0);
+        mainBox.append(barBox);
+        mainBox.append(stack);
 
         window = new Window();
         window.setDefaultSize(200, 200);
         window.setTitlebar(headerBar);
-        window.setChild(box);
+        window.setChild(mainBox);
         window.setTransientFor(mainWindow);
         window.present();
 
         setTitle("Dock window");
-
-        DropTarget dropTarget = new DropTarget(Button.getType(), DragAction.MOVE);
-
-        dropTarget.onDrop((value, x, y) -> {
-            if (value != null) {
-                if (value.getObject() instanceof TabButton tabButton) {
-                    DockWindow dockWindow = tabButton.dockWindow;
-                    IDockPanel dockPanel = tabButton.dockPanel;
-                    int width = barTabs.getWidth();
-                    int size = dockWindow.getDockPanels().size();
-
-                    int index = (int) Math.round(x / width * size);
-                    boolean add = true;
-
-                    if (dockWindow == this) {
-                        int oldIndex = dockPanels.indexOf(dockPanel);
-                        if (oldIndex < index) index--;
-                        index = Math.clamp(index, 0, dockPanels.size() - 1);
-
-                        if (dockPanels.size() == 1) add = false;
-                    }
-
-                    if (add) {
-                        dockWindow.removeDockPanel(dockPanel);
-                        addDockPanel(dockPanel, index);
-                        setActiveDockPanel(dockPanel);
-                    }
-                    return true;
-                }
-            }
-            return false;
-        });
-
-        barTabs.addController(dropTarget);
     }
 
-    private void setTitle(String title) {
-        window.setTitle(title);
-        titleLabel.setText(title);
-        icon.setTooltipMarkup(title);
-    }
-
-    public List<IDockPanel> getDockPanels() {
-        return dockPanels;
+    public void setActiveDockPanel(IDockPanel dockPanel) {
+        activeDockPanel = dockPanel;
+        stack.setVisibleChild(dockPanel.getWidget());
+        setTitle(dockPanel.getTitle());
     }
 
     public void addDockPanel(IDockPanel dockPanel) {
         boolean empty = dockPanels.isEmpty();
         dockPanels.add(dockPanel);
 
-        addTabButton(dockPanel);
+        createTab(dockPanel);
 
         if (empty) setActiveDockPanel(dockPanel);
     }
@@ -134,10 +106,10 @@ public class DockWindow {
         boolean empty = dockPanels.isEmpty();
         if (empty) {
             dockPanels.add(dockPanel);
-            addTabButton(dockPanel);
+            createTab(dockPanel);
         } else {
             dockPanels.add(index, dockPanel);
-            createTabButtons();
+            recreateTabs();
         }
 
         if (empty) setActiveDockPanel(dockPanel);
@@ -148,32 +120,36 @@ public class DockWindow {
         stack.remove(dockPanel.getWidget());
 
         if (!dockPanels.isEmpty()) {
-            createTabButtons();
+            recreateTabs();
             if (activeDockPanel == dockPanel) {
-                setActiveDockPanel(dockPanels.get(0));
+                setActiveDockPanel(dockPanels.getFirst());
             }
         } else {
             window.close();
         }
     }
 
-    public void setActiveDockPanel(IDockPanel dockPanel) {
-        activeDockPanel = dockPanel;
-        stack.setVisibleChild(dockPanel.getWidget());
-        setTitle(dockPanel.getTitle());
+    public List<IDockPanel> getDockPanels() {
+        return dockPanels;
     }
 
-    private void addTabButton(IDockPanel dockPanel) {
+    private void setTitle(String title) {
+        window.setTitle(title);
+        titleLabel.setText(title);
+        icon.setTooltipMarkup(title);
+    }
+
+    private void createTab(IDockPanel dockPanel) {
         stack.addChild(dockPanel.getWidget());
 
-        TabButton tabButton = new TabButton();
+        DockTabButton tabButton = new DockTabButton();
         tabButton.setIconName("edit-cut-symbolic");
         tabButton.setTooltipText(dockPanel.getTitle());
 
         tabButton.dockWindow = this;
         tabButton.dockPanel = dockPanel;
 
-        barTabs.append(tabButton);
+        tabsBarBox.append(tabButton);
 
         tabButton.onClicked(() -> {
             setActiveDockPanel(dockPanel);
@@ -181,42 +157,21 @@ public class DockWindow {
 
         DragSource dragSource = new DragSource();
         Value valueSource = new Value();
-        valueSource.init(Button.getType());
+        valueSource.init(DockTabButton.getType());
         valueSource.setObject(tabButton);
 
         dragSource.setContent(ContentProvider.forValue(valueSource));
         dragSource.setActions(DragAction.MOVE);
-
-        dragSource.onDragBegin((drag) -> {
-            if (drag != null) {
-                Button dragButton = Button.fromIconName("edit-cut-symbolic");
-                DragIcon dragIcon = DragIcon.getForDrag(drag);
-                dragIcon.setChild(dragButton);
-            }
-        });
-
-        dragSource.onDragEnd((drag, success) -> {
-            if (!success) {
-                if (dockPanels.size() > 1) {
-                    removeDockPanel(dockPanel);
-
-                    DockWindow newWindow = new DockWindow(this.mainWindow);
-                    newWindow.addDockPanel(dockPanel);
-                }
-
-                if (drag != null) {
-                    drag.dropDone(true);
-                }
-            }
-        });
+        dragSource.onDragBegin((drag) -> onTabDragBegin(drag, dockPanel));
+        dragSource.onDragEnd((drag, success) -> onTabDragEnd(drag, success, dockPanel));
 
         tabButton.addController(dragSource);
     }
 
-    private void createTabButtons() {
+    private void recreateTabs() {
         Widget child;
-        while ((child = barTabs.getFirstChild()) != null) {
-            barTabs.remove(child);
+        while ((child = tabsBarBox.getFirstChild()) != null) {
+            tabsBarBox.remove(child);
         }
 
         while ((child = stack.getFirstChild()) != null) {
@@ -224,7 +179,60 @@ public class DockWindow {
         }
 
         for (IDockPanel dockPanel : dockPanels) {
-            addTabButton(dockPanel);
+            createTab(dockPanel);
         }
+    }
+
+    private void onTabDragBegin(Drag drag, IDockPanel dockPanel) {
+        if (drag != null) {
+            Button dragButton = Button.fromIconName("edit-cut-symbolic");
+            DragIcon dragIcon = DragIcon.getForDrag(drag);
+            dragIcon.setChild(dragButton);
+        }
+    }
+
+    private void onTabDragEnd(Drag drag, boolean success, IDockPanel dockPanel) {
+        if (!success) {
+            if (dockPanels.size() > 1) {
+                removeDockPanel(dockPanel);
+
+                DockWindow newWindow = new DockWindow(this.mainWindow);
+                newWindow.addDockPanel(dockPanel);
+            }
+
+            if (drag != null) {
+                drag.dropDone(true);
+            }
+        }
+    }
+
+    private boolean onTabDrop(Value value, double x, double y) {
+        if (value != null) {
+            if (value.getObject() instanceof DockTabButton tabButton) {
+                DockWindow dockWindow = tabButton.dockWindow;
+                IDockPanel dockPanel = tabButton.dockPanel;
+                int width = tabsBarBox.getWidth();
+                int size = dockWindow.getDockPanels().size();
+
+                int index = (int) Math.round(x / width * size);
+                boolean add = true;
+
+                if (dockWindow == this) {
+                    int oldIndex = dockPanels.indexOf(dockPanel);
+                    if (oldIndex < index) index--;
+                    index = Math.clamp(index, 0, dockPanels.size() - 1);
+
+                    if (dockPanels.size() == 1) add = false;
+                }
+
+                if (add) {
+                    dockWindow.removeDockPanel(dockPanel);
+                    addDockPanel(dockPanel, index);
+                    setActiveDockPanel(dockPanel);
+                }
+                return true;
+            }
+        }
+        return false;
     }
 }
