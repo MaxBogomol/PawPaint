@@ -143,7 +143,7 @@ public class DockWindow {
         stack.addChild(dockPanel.getWidget());
 
         DockTabButton tabButton = new DockTabButton();
-        tabButton.setIconName("edit-cut-symbolic");
+        tabButton.setIconName(dockPanel.getIcon());
         tabButton.setTooltipText(dockPanel.getTitle());
 
         tabButton.dockWindow = this;
@@ -151,9 +151,7 @@ public class DockWindow {
 
         tabsBarBox.append(tabButton);
 
-        tabButton.onClicked(() -> {
-            setActiveDockPanel(dockPanel);
-        });
+        tabButton.onClicked(() -> onTabClicked(dockPanel));
 
         DragSource dragSource = new DragSource();
         Value valueSource = new Value();
@@ -173,7 +171,6 @@ public class DockWindow {
         while ((child = tabsBarBox.getFirstChild()) != null) {
             tabsBarBox.remove(child);
         }
-
         while ((child = stack.getFirstChild()) != null) {
             stack.remove(child);
         }
@@ -183,9 +180,13 @@ public class DockWindow {
         }
     }
 
+    private void onTabClicked(IDockPanel dockPanel) {
+        setActiveDockPanel(dockPanel);
+    }
+
     private void onTabDragBegin(Drag drag, IDockPanel dockPanel) {
         if (drag != null) {
-            Button dragButton = Button.fromIconName("edit-cut-symbolic");
+            Button dragButton = Button.fromIconName(dockPanel.getIcon());
             DragIcon dragIcon = DragIcon.getForDrag(drag);
             dragIcon.setChild(dragButton);
         }

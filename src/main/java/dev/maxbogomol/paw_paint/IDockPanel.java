@@ -8,8 +8,9 @@ public interface IDockPanel {
         return "Dock panel";
     }
 
-    Widget getWidget();
+    default String getIcon() {
+        return "edit-cut-symbolic";
+    }
 
-    default void dock(DockWindow dockWindow) {}
-    default void undock(DockWindow dockWindow) {}
+    Widget getWidget();
 }
