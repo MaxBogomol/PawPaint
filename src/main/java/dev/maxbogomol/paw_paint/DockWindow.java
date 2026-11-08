@@ -89,6 +89,7 @@ public class DockWindow {
 
     public void setActiveDockPanel(IDockPanel dockPanel) {
         activeDockPanel = dockPanel;
+        icon.setIconName(dockPanel.getIcon());
         stack.setVisibleChild(dockPanel.getWidget());
         setTitle(dockPanel.getTitle());
     }
