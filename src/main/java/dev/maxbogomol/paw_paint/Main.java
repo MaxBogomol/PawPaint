@@ -1,7 +1,12 @@
 package dev.maxbogomol.paw_paint;
 
+import org.gnome.gdk.Display;
 import org.gnome.gio.ApplicationFlags;
 import org.gnome.gtk.*;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Objects;
 
 public class Main {
 
@@ -11,6 +16,21 @@ public class Main {
             Window window = new ApplicationWindow(app);
             window.setTitle("Paw Paint");
             window.setDefaultSize(400, 400);
+
+            CssProvider cssProvider = new CssProvider();
+
+            try (InputStream inputStream = Main.class.getResourceAsStream("/style.css")) {
+                if (inputStream != null) {
+                    cssProvider.loadFromBytes(inputStream.readAllBytes());
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+
+            Gtk.styleContextAddProviderForDisplay(Objects.requireNonNull(Display.getDefault()),
+                    cssProvider,
+                    Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+            );
 
             Label titleLabel = new Label("Paw Paint");
             titleLabel.addCssClass("title");

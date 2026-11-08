@@ -45,10 +45,7 @@ public class DockWindow {
         headerBar.packStart(icon);
 
         Box bar = new Box(Orientation.HORIZONTAL, 0);
-        bar.setMarginStart(5);
-        bar.setMarginEnd(5);
-        bar.setMarginTop(5);
-        bar.setMarginBottom(5);
+        bar.addCssClass("pawpaint-bar");
 
         barTabs = new Box(Orientation.HORIZONTAL, 0);
         barTabs.setHalign(Align.START);
