@@ -68,9 +68,6 @@ public class DockWindow {
         settingsBox = new Box(Orientation.HORIZONTAL, 0);
         settingsBox.append(settingsButton);
 
-        barBox.append(scrolledTabsBar);
-        barBox.append(settingsBox);
-
         mainBox = new Box(Orientation.VERTICAL, 0);
 
         window = new Window();
@@ -82,23 +79,23 @@ public class DockWindow {
 
         setTitle("Dock window");
 
-        setupBarOrientation(Orientation.HORIZONTAL);
+        setupBarOrientation(Orientation.HORIZONTAL, true);
         setupBarPosition(true);
 
         settingsButton.onClicked(() -> {
-            setupBarOrientation(Orientation.VERTICAL);
+            setupBarOrientation(Orientation.VERTICAL, false);
             setupBarPosition(false);
         });
     }
 
-    private void setupBarOrientation(Orientation orientation) {
+    private void setupBarOrientation(Orientation orientation, boolean front) {
         barBox.setOrientation(orientation);
         tabsBarBox.setOrientation(orientation);
 
         if (orientation == Orientation.HORIZONTAL) {
             tabsBarBox.setHexpand(true);
             tabsBarBox.setVexpand(false);
-            tabsBarBox.setHalign(Align.START);
+            tabsBarBox.setHalign(front ? Align.START : Align.END);
             tabsBarBox.setValign(Align.FILL);
 
             scrolledTabsBar.setPolicy(PolicyType.AUTOMATIC, PolicyType.NEVER);
@@ -108,11 +105,22 @@ public class DockWindow {
             tabsBarBox.setHexpand(false);
             tabsBarBox.setVexpand(true);
             tabsBarBox.setHalign(Align.FILL);
-            tabsBarBox.setValign(Align.START);
+            tabsBarBox.setValign(front ? Align.START : Align.END);
 
             scrolledTabsBar.setPolicy(PolicyType.NEVER, PolicyType.AUTOMATIC);
 
             mainBox.setOrientation(Orientation.HORIZONTAL);
+        }
+
+        scrolledTabsBar.unparent();
+        settingsBox.unparent();
+
+        if (front) {
+            barBox.append(scrolledTabsBar);
+            barBox.append(settingsBox);
+        } else {
+            barBox.append(settingsBox);
+            barBox.append(scrolledTabsBar);
         }
     }
 
