@@ -8,6 +8,7 @@ import org.gnome.gtk.*;
 import org.gnome.pango.EllipsizeMode;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class DockWindow {
@@ -20,7 +21,7 @@ public class DockWindow {
 
     private final Label titleLabel;
     private final Button icon;
-    private final Button settingsButton;
+    private final MenuButton settingsButton;
 
     private final Box barBox;
     private final Box tabsBarBox;
@@ -28,6 +29,10 @@ public class DockWindow {
     private final ScrolledWindow scrolledTabsBar;
     private final Stack stack;
     private final Box mainBox;
+
+    private Orientation barOrientation = Orientation.HORIZONTAL;
+    private boolean barOrientationFront = true;
+    private boolean barPositionFront = true;
 
     public DockWindow(Window mainWindow) {
         this.mainWindow = mainWindow;
@@ -44,7 +49,8 @@ public class DockWindow {
         headerBar.setTitleWidget(titleLabel);
         headerBar.packStart(icon);
 
-        settingsButton = Button.fromIconName("document-properties-symbolic");
+        settingsButton = new MenuButton();
+        settingsButton.setIconName("open-menu-symbolic");
         settingsButton.setHalign(Align.CENTER);
         settingsButton.setValign(Align.CENTER);
         settingsButton.addCssClass("flat");
@@ -79,13 +85,58 @@ public class DockWindow {
 
         setTitle("Dock window");
 
-        setupBarOrientation(Orientation.HORIZONTAL, true);
-        setupBarPosition(true);
+        setupBarOrientation(barOrientation, barOrientationFront);
+        setupBarPosition(barPositionFront);
+        
+        Popover popoverMenu = new Popover();
 
-        settingsButton.onClicked(() -> {
-            setupBarOrientation(Orientation.VERTICAL, false);
-            setupBarPosition(false);
+        Box mainScreen = new Box(Orientation.VERTICAL, 2);
+
+        Button button1 = new Button();
+        button1.setLabel("Reverse");
+        button1.addCssClass("flat");
+        button1.onClicked(() -> {
+            Collections.reverse(dockPanels);
+            recreateTabs();
+            setActiveDockPanel(dockPanels.getFirst());
         });
+
+        Button button2 = new Button();
+        button2.setLabel("bwap");
+        button2.addCssClass("flat");
+        button2.onClicked(() -> {
+            barPositionFront = !barPositionFront;
+            setupBarPosition(barPositionFront);
+        });
+
+        Button button3 = new Button();
+        button3.setLabel("bwap2");
+        button3.addCssClass("flat");
+        button3.onClicked(() -> {
+            barOrientationFront = !barOrientationFront;
+            setupBarOrientation(barOrientation, barOrientationFront);
+        });
+
+        Button button4 = new Button();
+        button4.setLabel("bwap3");
+        button4.addCssClass("flat");
+        button4.onClicked(() -> {
+            if (barOrientation == Orientation.HORIZONTAL) {
+                barOrientation = Orientation.VERTICAL;
+            } else {
+                barOrientation = Orientation.HORIZONTAL;
+            }
+            setupBarOrientation(barOrientation, barOrientationFront);
+        });
+
+        mainScreen.append(button1);
+        mainScreen.append(button2);
+        mainScreen.append(button3);
+        mainScreen.append(button4);
+
+        popoverMenu.setChild(mainScreen);
+
+        settingsButton.setPopover(popoverMenu);
     }
 
     private void setupBarOrientation(Orientation orientation, boolean front) {
