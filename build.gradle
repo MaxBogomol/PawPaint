@@ -121,7 +121,7 @@ tasks.register('createWindowsAppImage', Exec) {
     ]
 }
 
-tasks.register('buildWindowsStandalone', Zip) {
+tasks.register('buildWindows-x86_64-standalone', Zip) {
     dependsOn("createWindowsAppImage")
 
     from "${buildDir}/build/windows/PawPaint"
