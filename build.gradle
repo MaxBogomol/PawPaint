@@ -1,10 +1,15 @@
 plugins {
     id 'java'
     id 'application'
+    id 'com.gradleup.shadow' version '9.0.0'
 }
 
 version = "${app_version}"
 group = 'dev.maxbogomol.paw_paint'
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(25)
+
+println('Java: ' + System.getProperty('java.version') + ' JVM: ' + System.getProperty('java.vm.version') + '(' + System.getProperty('java.vendor') + ') Arch: ' + System.getProperty('os.arch'))
 
 repositories {
     mavenCentral()
@@ -21,4 +26,16 @@ tasks.named('run') {
 
 application {
     mainClass = "${group}.Main"
+}
+
+jar {
+    manifest {
+        attributes(
+                'Main-Class': "${group}.Main"
+        )
+    }
+}
+
+shadowJar {
+    archiveClassifier.set('')
 }
