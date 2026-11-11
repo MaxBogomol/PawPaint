@@ -1,0 +1,5 @@
+#!/bin/sh
+SELF=$(dirname "$(readlink -f "$0")")
+
+export LD_LIBRARY_PATH="$SELF/lib:$LD_LIBRARY_PATH"
+exec "$SELF/bin/PawPaint" "$@"

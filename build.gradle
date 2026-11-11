@@ -39,3 +39,48 @@ jar {
 shadowJar {
     archiveClassifier.set('')
 }
+
+tasks.register('createLinuxJpackage-x86_64', Exec) {
+    dependsOn "shadowJar"
+
+    doFirst {
+        delete "${buildDir}/build/linux-x86_64"
+    }
+
+    executable = "${System.getProperty('java.home')}/bin/jpackage"
+    args = [
+            '--type', 'app-image',
+            '--name', 'PawPaint',
+            '--app-version', "${app_version}",
+            '--input', "${buildDir}/libs",
+            '--main-jar', "${shadowJar.archiveFileName.get()}",
+            '--main-class', "dev.maxbogomol.paw_paint.Main",
+            '--dest', "${buildDir}/build/linux-x86_64",
+            '--java-options', '--enable-native-access=ALL-UNNAMED'
+    ]
+}
+
+tasks.register('buildLinuxAppImage-x86_64', Exec) {
+    dependsOn "createLinuxJpackage-x86_64"
+
+    doFirst {
+        def appDir = "${buildDir}/build/linux-x86_64/PawPaint"
+        def deployLinuxDir = "${projectDir}/test"
+
+        project.copy {
+            from deployLinuxDir
+            into appDir
+            include "AppRun"
+            include "dev.maxbogomol.paw_paint.desktop"
+            include "dev.maxbogomol.paw_paint.png"
+        }
+
+        file("${appDir}/AppRun").setExecutable(true, false)
+    }
+
+    executable = 'appimagetool'
+    args = [
+            "${buildDir}/build/linux-x86_64/PawPaint",
+            "${buildDir}/build/PawPaint-${app_version}-x86_64.AppImage"
+    ]
+}

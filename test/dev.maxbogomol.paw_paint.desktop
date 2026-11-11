@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Paw Paint
+GenericName=Wawawa
+Exec=./AppRun
+Icon=dev.maxbogomol.paw_paint
+Categories=Graphics;
+StartupWMClass=dev.maxbogomol.paw_paint
