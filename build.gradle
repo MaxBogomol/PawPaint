@@ -40,11 +40,11 @@ shadowJar {
     archiveClassifier.set('')
 }
 
-tasks.register('createLinuxJpackage-x86_64', Exec) {
+tasks.register('createLinuxAppImage', Exec) {
     dependsOn "shadowJar"
 
     doFirst {
-        delete "${buildDir}/build/linux-x86_64"
+        delete "${buildDir}/build/linux-app-image"
     }
 
     executable = "${System.getProperty('java.home')}/bin/jpackage"
@@ -55,16 +55,16 @@ tasks.register('createLinuxJpackage-x86_64', Exec) {
             '--input', "${buildDir}/libs",
             '--main-jar', "${shadowJar.archiveFileName.get()}",
             '--main-class', "dev.maxbogomol.paw_paint.Main",
-            '--dest', "${buildDir}/build/linux-x86_64",
+            '--dest', "${buildDir}/build/linux-app-image",
             '--java-options', '--enable-native-access=ALL-UNNAMED'
     ]
 }
 
-tasks.register('buildLinuxAppImage-x86_64', Exec) {
-    dependsOn "createLinuxJpackage-x86_64"
+tasks.register('buildLinuxAppImage', Exec) {
+    dependsOn "createLinuxAppImage"
 
     doFirst {
-        def appDir = "${buildDir}/build/linux-x86_64/PawPaint"
+        def appDir = "${buildDir}/build/linux-app-image/PawPaint"
         def configDir = "${projectDir}/config/appimage"
 
         project.copy {
@@ -77,55 +77,24 @@ tasks.register('buildLinuxAppImage-x86_64', Exec) {
 
         file("${appDir}/AppRun").setExecutable(true, false)
     }
+}
+
+tasks.register('buildLinuxAppImage-x86_64', Exec) {
+    dependsOn "buildLinuxAppImage"
 
     executable = 'appimagetool'
     args = [
-            "${buildDir}/build/linux-x86_64/PawPaint",
+            "${buildDir}/build/linux-app-image/PawPaint",
             "${buildDir}/build/PawPaint-${app_version}-x86_64.AppImage"
     ]
 }
 
-tasks.register('createLinuxJpackage-aarch64', Exec) {
-    dependsOn "shadowJar"
-
-    doFirst {
-        delete "${buildDir}/build/linux-aarch64"
-    }
-
-    executable = "${System.getProperty('java.home')}/bin/jpackage"
-    args = [
-            '--type', 'app-image',
-            '--name', 'PawPaint',
-            '--app-version', "${app_version}",
-            '--input', "${buildDir}/libs",
-            '--main-jar', "${shadowJar.archiveFileName.get()}",
-            '--main-class', "dev.maxbogomol.paw_paint.Main",
-            '--dest', "${buildDir}/build/linux-aarch64",
-            '--java-options', '--enable-native-access=ALL-UNNAMED'
-    ]
-}
-
 tasks.register('buildLinuxAppImage-aarch64', Exec) {
-    dependsOn "createLinuxJpackage-aarch64"
-
-    doFirst {
-        def appDir = "${buildDir}/build/linux-aarch64/PawPaint"
-        def configDir = "${projectDir}/config/appimage"
-
-        project.copy {
-            from configDir
-            into appDir
-            include "AppRun"
-            include "dev.maxbogomol.paw_paint.desktop"
-            include "dev.maxbogomol.paw_paint.png"
-        }
-
-        file("${appDir}/AppRun").setExecutable(true, false)
-    }
+    dependsOn "buildLinuxAppImage"
 
     executable = 'appimagetool'
     args = [
-            "${buildDir}/build/linux-aarch64/PawPaint",
+            "${buildDir}/build/linux-app-image/PawPaint",
             "${buildDir}/build/PawPaint-${app_version}-aarch64.AppImage"
     ]
 }
