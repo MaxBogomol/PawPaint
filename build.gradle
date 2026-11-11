@@ -86,7 +86,7 @@ tasks.register('buildLinuxAppImage-x86_64', Exec) {
     executable = 'appimagetool'
     args = [
             "${buildDir}/build/linux-app-image/PawPaint",
-            "${buildDir}/build/PawPaint-${app_version}-x86_64.AppImage"
+            "${buildDir}/build/PawPaint-linux-${app_version}-x86_64.AppImage"
     ]
 }
 
@@ -97,6 +97,6 @@ tasks.register('buildLinuxAppImage-aarch64', Exec) {
     executable = 'appimagetool'
     args = [
             "${buildDir}/build/linux-app-image/PawPaint",
-            "${buildDir}/build/PawPaint-${app_version}-aarch64.AppImage"
+            "${buildDir}/build/PawPaint-linux-${app_version}-aarch64.AppImage"
     ]
 }
