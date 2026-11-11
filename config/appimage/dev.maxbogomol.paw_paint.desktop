@@ -1,7 +1,7 @@
 [Desktop Entry]
 Type=Application
 Name=Paw Paint
-GenericName=Wawawa
+GenericName=Paint with your paws
 Exec=./AppRun
 Icon=dev.maxbogomol.paw_paint
 Categories=Graphics;

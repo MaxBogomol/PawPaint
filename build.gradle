@@ -65,10 +65,10 @@ tasks.register('buildLinuxAppImage-x86_64', Exec) {
 
     doFirst {
         def appDir = "${buildDir}/build/linux-x86_64/PawPaint"
-        def deployLinuxDir = "${projectDir}/test"
+        def configDir = "${projectDir}/config/appimage"
 
         project.copy {
-            from deployLinuxDir
+            from configDir
             into appDir
             include "AppRun"
             include "dev.maxbogomol.paw_paint.desktop"
