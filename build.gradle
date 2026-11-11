@@ -44,7 +44,7 @@ tasks.register('createLinuxAppImage', Exec) {
     dependsOn("shadowJar")
 
     doFirst {
-        delete "${buildDir}/build/linux-app-image"
+        delete "${buildDir}/build/linux"
     }
 
     executable = "${System.getProperty('java.home')}/bin/jpackage"
@@ -55,7 +55,7 @@ tasks.register('createLinuxAppImage', Exec) {
             '--input', "${buildDir}/libs",
             '--main-jar', "${shadowJar.archiveFileName.get()}",
             '--main-class', "dev.maxbogomol.paw_paint.Main",
-            '--dest', "${buildDir}/build/linux-app-image",
+            '--dest', "${buildDir}/build/linux",
             '--java-options', '--enable-native-access=ALL-UNNAMED'
     ]
 }
@@ -64,7 +64,7 @@ tasks.register('buildLinuxAppImage') {
     dependsOn("createLinuxAppImage")
 
     doLast {
-        def appDir = "${buildDir}/build/linux-app-image/PawPaint"
+        def appDir = "${buildDir}/build/linux/PawPaint"
         def configDir = "${projectDir}/config/appimage"
 
         project.copy {
@@ -85,8 +85,8 @@ tasks.register('buildLinuxAppImage-x86_64', Exec) {
     environment('ARCH', 'x86_64')
     executable = 'appimagetool'
     args = [
-            "${buildDir}/build/linux-app-image/PawPaint",
-            "${buildDir}/build/PawPaint-linux-${app_version}-x86_64.AppImage"
+            "${buildDir}/build/linux/PawPaint",
+            "${buildDir}/build/PawPaint-${app_version}-linux-x86_64.AppImage"
     ]
 }
 
@@ -96,7 +96,36 @@ tasks.register('buildLinuxAppImage-aarch64', Exec) {
     environment('ARCH', 'aarch64')
     executable = 'appimagetool'
     args = [
-            "${buildDir}/build/linux-app-image/PawPaint",
-            "${buildDir}/build/PawPaint-linux-${app_version}-aarch64.AppImage"
+            "${buildDir}/build/linux/PawPaint",
+            "${buildDir}/build/PawPaint-${app_version}-linux-aarch64.AppImage"
     ]
+}
+
+tasks.register('createWindowsAppImage', Exec) {
+    dependsOn("shadowJar")
+
+    doFirst {
+        delete "${buildDir}/build/windows"
+    }
+
+    executable = "${System.getProperty('java.home')}/bin/jpackage"
+    args = [
+            '--type', 'app-image',
+            '--name', 'PawPaint',
+            '--app-version', "${app_version}",
+            '--input', "${buildDir}/libs",
+            '--main-jar', "${shadowJar.archiveFileName.get()}",
+            '--main-class', "dev.maxbogomol.paw_paint.Main",
+            '--dest', "${buildDir}/build/windows",
+            '--java-options', '--enable-native-access=ALL-UNNAMED'
+    ]
+}
+
+tasks.register('buildWindowsStandalone', Zip) {
+    dependsOn("createWindowsAppImage")
+
+    from "${buildDir}/build/windows/PawPaint"
+
+    destinationDirectory = file("${buildDir}/build")
+    archiveFileName = "PawPaint-${app_version}-windows-x86_64-standalone.zip"
 }
