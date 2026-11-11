@@ -41,7 +41,7 @@ shadowJar {
 }
 
 tasks.register('createLinuxAppImage', Exec) {
-    dependsOn "shadowJar"
+    dependsOn("shadowJar")
 
     doFirst {
         delete "${buildDir}/build/linux-app-image"
@@ -60,10 +60,10 @@ tasks.register('createLinuxAppImage', Exec) {
     ]
 }
 
-tasks.register('buildLinuxAppImage', Exec) {
-    dependsOn "createLinuxAppImage"
+tasks.register('buildLinuxAppImage') {
+    dependsOn("createLinuxAppImage")
 
-    doFirst {
+    doLast {
         def appDir = "${buildDir}/build/linux-app-image/PawPaint"
         def configDir = "${projectDir}/config/appimage"
 
@@ -80,8 +80,9 @@ tasks.register('buildLinuxAppImage', Exec) {
 }
 
 tasks.register('buildLinuxAppImage-x86_64', Exec) {
-    dependsOn "buildLinuxAppImage"
+    dependsOn("buildLinuxAppImage")
 
+    environment('ARCH', 'x86_64')
     executable = 'appimagetool'
     args = [
             "${buildDir}/build/linux-app-image/PawPaint",
@@ -90,8 +91,9 @@ tasks.register('buildLinuxAppImage-x86_64', Exec) {
 }
 
 tasks.register('buildLinuxAppImage-aarch64', Exec) {
-    dependsOn "buildLinuxAppImage"
+    dependsOn("buildLinuxAppImage")
 
+    environment('ARCH', 'aarch64')
     executable = 'appimagetool'
     args = [
             "${buildDir}/build/linux-app-image/PawPaint",
