@@ -40,8 +40,31 @@ shadowJar {
     archiveClassifier.set('')
 }
 
-tasks.register('createLinuxAppImage', Exec) {
+tasks.register('createJar', Copy) {
+    group = 'release create'
     dependsOn("shadowJar")
+
+    def jarDir = file("${buildDir}/build/jar")
+
+    doFirst {
+        delete jarDir
+    }
+
+    from shadowJar.archiveFile
+    into jarDir
+}
+
+tasks.register('buildJar', Copy) {
+    group = 'release build'
+    dependsOn("shadowJar")
+
+    from shadowJar.archiveFile
+    into "${buildDir}/build/release"
+}
+
+tasks.register('createLinuxAppImage', Exec) {
+    group = 'release create'
+    dependsOn("createJar")
 
     doFirst {
         delete "${buildDir}/build/linux"
@@ -52,7 +75,7 @@ tasks.register('createLinuxAppImage', Exec) {
             '--type', 'app-image',
             '--name', 'PawPaint',
             '--app-version', "${app_version}",
-            '--input', "${buildDir}/libs",
+            '--input', "${buildDir}/build/jar",
             '--main-jar', "${shadowJar.archiveFileName.get()}",
             '--main-class', "dev.maxbogomol.paw_paint.Main",
             '--dest', "${buildDir}/build/linux",
@@ -60,7 +83,8 @@ tasks.register('createLinuxAppImage', Exec) {
     ]
 }
 
-tasks.register('buildLinuxAppImage') {
+tasks.register('configLinuxAppImage') {
+    group = 'release config'
     dependsOn("createLinuxAppImage")
 
     doLast {
@@ -80,29 +104,32 @@ tasks.register('buildLinuxAppImage') {
 }
 
 tasks.register('buildLinuxAppImage-x86_64', Exec) {
-    dependsOn("buildLinuxAppImage")
+    group = 'release build'
+    dependsOn("configLinuxAppImage")
 
     environment('ARCH', 'x86_64')
     executable = 'appimagetool'
     args = [
             "${buildDir}/build/linux/PawPaint",
-            "${buildDir}/build/PawPaint-${app_version}-linux-x86_64.AppImage"
+            "${buildDir}/build/release/PawPaint-${app_version}-linux-x86_64.AppImage"
     ]
 }
 
 tasks.register('buildLinuxAppImage-aarch64', Exec) {
-    dependsOn("buildLinuxAppImage")
+    group = 'release build'
+    dependsOn("configLinuxAppImage")
 
     environment('ARCH', 'aarch64')
     executable = 'appimagetool'
     args = [
             "${buildDir}/build/linux/PawPaint",
-            "${buildDir}/build/PawPaint-${app_version}-linux-aarch64.AppImage"
+            "${buildDir}/build/release/PawPaint-${app_version}-linux-aarch64.AppImage"
     ]
 }
 
 tasks.register('createWindowsAppImage', Exec) {
-    dependsOn("shadowJar")
+    group = 'release create'
+    dependsOn("createJar")
 
     doFirst {
         delete "${buildDir}/build/windows"
@@ -113,7 +140,7 @@ tasks.register('createWindowsAppImage', Exec) {
             '--type', 'app-image',
             '--name', 'PawPaint',
             '--app-version', "${app_version}",
-            '--input', "${buildDir}/libs",
+            '--input', "${buildDir}/build/jar",
             '--main-jar', "${shadowJar.archiveFileName.get()}",
             '--main-class', "dev.maxbogomol.paw_paint.Main",
             '--dest', "${buildDir}/build/windows",
@@ -122,16 +149,18 @@ tasks.register('createWindowsAppImage', Exec) {
 }
 
 tasks.register('buildWindowsStandalone-x86_64', Zip) {
+    group = 'release build'
     dependsOn("createWindowsAppImage")
 
     from "${buildDir}/build/windows/PawPaint"
 
-    destinationDirectory = file("${buildDir}/build")
+    destinationDirectory = file("${buildDir}/build/release")
     archiveFileName = "PawPaint-${app_version}-windows-x86_64-standalone.zip"
 }
 
 tasks.register('createWindowsInstaller', Exec) {
-    dependsOn("shadowJar")
+    group = 'release create'
+    dependsOn("createJar")
 
     doFirst {
         delete "${buildDir}/build/windows-installer"
@@ -144,7 +173,7 @@ tasks.register('createWindowsInstaller', Exec) {
             '--type', 'exe',
             '--name', 'PawPaint',
             '--app-version', "${winVersion}",
-            '--input', "${buildDir}/libs",
+            '--input', "${buildDir}/build/jar",
             '--main-jar', "${shadowJar.archiveFileName.get()}",
             '--main-class', "dev.maxbogomol.paw_paint.Main",
             '--dest', "${buildDir}/build/windows-installer",
@@ -160,10 +189,11 @@ tasks.register('createWindowsInstaller', Exec) {
 }
 
 tasks.register('buildWindowsInstaller-x86_64', Zip) {
+    group = 'release build'
     dependsOn("createWindowsInstaller")
 
     from "${buildDir}/build/windows-installer"
 
-    destinationDirectory = file("${buildDir}/build")
+    destinationDirectory = file("${buildDir}/build/release")
     archiveFileName = "PawPaint-${app_version}-windows-x86_64-installer.zip"
 }
