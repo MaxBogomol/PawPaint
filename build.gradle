@@ -121,11 +121,49 @@ tasks.register('createWindowsAppImage', Exec) {
     ]
 }
 
-tasks.register('buildWindows-x86_64-standalone', Zip) {
+tasks.register('buildWindowsStandalone-x86_64', Zip) {
     dependsOn("createWindowsAppImage")
 
     from "${buildDir}/build/windows/PawPaint"
 
     destinationDirectory = file("${buildDir}/build")
     archiveFileName = "PawPaint-${app_version}-windows-x86_64-standalone.zip"
+}
+
+tasks.register('createWindowsInstaller', Exec) {
+    dependsOn("shadowJar")
+
+    doFirst {
+        delete "${buildDir}/build/windows-installer"
+    }
+
+    def winVersion = app_version.toString().count('.') == 1 ? "${app_version}.0" : "${app_version}"
+
+    executable = "${System.getProperty('java.home')}/bin/jpackage"
+    args = [
+            '--type', 'exe',
+            '--name', 'PawPaint',
+            '--app-version', "${winVersion}",
+            '--input', "${buildDir}/libs",
+            '--main-jar', "${shadowJar.archiveFileName.get()}",
+            '--main-class', "dev.maxbogomol.paw_paint.Main",
+            '--dest', "${buildDir}/build/windows-installer",
+            '--java-options', '--enable-native-access=ALL-UNNAMED',
+            '--win-dir-chooser',
+            '--win-menu',
+            '--win-shortcut',
+            '--win-shortcut-prompt',
+            '--win-help-url', "${win_help_url}",
+            '--win-update-url', "${win_update_url}",
+            '--win-upgrade-uuid', "${win_upgrade_uuid}"
+    ]
+}
+
+tasks.register('buildWindowsInstaller-x86_64', Zip) {
+    dependsOn("createWindowsInstaller")
+
+    from "${buildDir}/build/windows-installer"
+
+    destinationDirectory = file("${buildDir}/build")
+    archiveFileName = "PawPaint-${app_version}-windows-x86_64-installer.zip"
 }
