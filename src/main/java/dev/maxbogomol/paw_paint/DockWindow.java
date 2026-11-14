@@ -93,55 +93,65 @@ public class DockWindow {
 
         setTitle("Dock window");
 
+        createSettingsMenu();
+
         setupBarOrientation();
         setupBarBoxPosition();
         setupSettingsPosition();
         setupDockPanelsAnimation();
+    }
 
+    private void createSettingsMenu() {
         PopoverMenu settingsPopoverMenu = new PopoverMenu();
+        settingsPopoverMenu.setFlags(PopoverMenuFlags.NESTED);
 
         Menu settingsMainMenu = new Menu();
 
         Menu settingsSettingsPositionMenu = new Menu();
-
         settingsSettingsPositionMenu.append("Start", "menu.settings-position::start");
         settingsSettingsPositionMenu.append("End", "menu.settings-position::end");
         settingsSettingsPositionMenu.append("Header", "menu.settings-position::header");
 
-        settingsMainMenu.appendSubmenu("Settings position", settingsSettingsPositionMenu);
+        settingsMainMenu.appendSubmenu("Position", settingsSettingsPositionMenu);
+
+        Menu settingsBarMenu = new Menu();
 
         Menu settingsBarPositionMenu = new Menu();
-
         settingsBarPositionMenu.append("Left", "menu.bar-position::left");
         settingsBarPositionMenu.append("Right", "menu.bar-position::right");
         settingsBarPositionMenu.append("Top", "menu.bar-position::top");
         settingsBarPositionMenu.append("Bottom", "menu.bar-position::bottom");
 
-        settingsMainMenu.appendSubmenu("Bar position", settingsBarPositionMenu);
+        settingsBarMenu.appendSubmenu("Position", settingsBarPositionMenu);
 
         Menu settingsBarAlignMenu = new Menu();
-
         settingsBarAlignMenu.append("Start", "menu.bar-align::start");
         settingsBarAlignMenu.append("Center", "menu.bar-align::center");
         settingsBarAlignMenu.append("End", "menu.bar-align::end");
 
-        settingsMainMenu.appendSubmenu("Bar align", settingsBarAlignMenu);
+        settingsBarMenu.appendSubmenu("Align", settingsBarAlignMenu);
+        settingsMainMenu.appendSubmenu("Bar", settingsBarMenu);
+
+        Menu settingsDockPanelsMenu = new Menu();
 
         Menu settingsDockPanelsAnimationMenu = new Menu();
-
         settingsDockPanelsAnimationMenu.append("None", "menu.dock-panels-animation::none");
         settingsDockPanelsAnimationMenu.append("Fade", "menu.dock-panels-animation::fade");
         settingsDockPanelsAnimationMenu.append("Left-Right", "menu.dock-panels-animation::left-right");
         settingsDockPanelsAnimationMenu.append("Up-Down", "menu.dock-panels-animation::up-down");
 
-        settingsMainMenu.appendSubmenu("Dock-panels animation", settingsDockPanelsAnimationMenu);
+        settingsDockPanelsMenu.appendSubmenu("Animation", settingsDockPanelsAnimationMenu);
+        settingsDockPanelsMenu.append("Reverse", "menu.dock-panels-reverse");
 
-        settingsMainMenu.append("Reverse", "menu.dock-panels-reverse");
+        settingsMainMenu.appendSubmenu("Dock-panels", settingsDockPanelsMenu);
 
         settingsPopoverMenu.setMenuModel(settingsMainMenu);
-
         settingsButton.setPopover(settingsPopoverMenu);
 
+        createSettingMenuActions(settingsPopoverMenu);
+    }
+
+    private void createSettingMenuActions(PopoverMenu popoverMenu) {
         SimpleAction actionSettingsPosition = SimpleAction.stateful("settings-position", VariantTypes.STRING, Variant.string("end"));
         actionSettingsPosition.onActivate(parameter -> {
             if (parameter != null) {
@@ -223,7 +233,7 @@ public class DockWindow {
             }
         });
 
-        SimpleAction actionDockPanelsAnimation = SimpleAction.stateful("dock-panels-animation", VariantTypes.STRING, Variant.string("start"));
+        SimpleAction actionDockPanelsAnimation = SimpleAction.stateful("dock-panels-animation", VariantTypes.STRING, Variant.string("left-right"));
         actionDockPanelsAnimation.onActivate(parameter -> {
             if (parameter != null) {
                 String value = parameter.getString(null);
@@ -266,7 +276,7 @@ public class DockWindow {
         customGroup.addAction(actionDockPanelsAnimation);
         customGroup.addAction(actionDockPanelsReverse);
 
-        settingsPopoverMenu.insertActionGroup("menu", customGroup);
+        popoverMenu.insertActionGroup("menu", customGroup);
     }
 
     private void setupBarOrientation(Orientation orientation, Align align) {
