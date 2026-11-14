@@ -41,6 +41,7 @@ public class DockWindow {
     private Align barAlign = Align.START;
     private boolean barBoxPositionFront = true;
     private Align settingsPosition = Align.END;
+    private StackTransitionType dockPanelsAnimation = StackTransitionType.SLIDE_LEFT_RIGHT;
 
     public DockWindow(Window mainWindow) {
         this.mainWindow = mainWindow;
@@ -64,7 +65,6 @@ public class DockWindow {
         settingsButton.setHasFrame(false);
 
         mainStack = new Stack();
-        mainStack.setTransitionType(StackTransitionType.SLIDE_LEFT_RIGHT);
 
         barBox = new Box(Orientation.HORIZONTAL, 0);
         barBox.addCssClass("pawpaint-tabs-bar");
@@ -96,6 +96,7 @@ public class DockWindow {
         setupBarOrientation();
         setupBarBoxPosition();
         setupSettingsPosition();
+        setupDockPanelsAnimation();
 
         PopoverMenu settingsPopoverMenu = new PopoverMenu();
 
@@ -125,6 +126,15 @@ public class DockWindow {
         settingsBarAlignMenu.append("End", "menu.bar-align::end");
 
         settingsMainMenu.appendSubmenu("Bar align", settingsBarAlignMenu);
+
+        Menu settingsDockPanelsAnimationMenu = new Menu();
+
+        settingsDockPanelsAnimationMenu.append("None", "menu.dock-panels-animation::none");
+        settingsDockPanelsAnimationMenu.append("Fade", "menu.dock-panels-animation::fade");
+        settingsDockPanelsAnimationMenu.append("Left-Right", "menu.dock-panels-animation::left-right");
+        settingsDockPanelsAnimationMenu.append("Up-Down", "menu.dock-panels-animation::up-down");
+
+        settingsMainMenu.appendSubmenu("Dock-panels animation", settingsDockPanelsAnimationMenu);
 
         settingsMainMenu.append("Reverse", "menu.dock-panels-reverse");
 
@@ -213,6 +223,35 @@ public class DockWindow {
             }
         });
 
+        SimpleAction actionDockPanelsAnimation = SimpleAction.stateful("dock-panels-animation", VariantTypes.STRING, Variant.string("start"));
+        actionDockPanelsAnimation.onActivate(parameter -> {
+            if (parameter != null) {
+                String value = parameter.getString(null);
+                actionDockPanelsAnimation.setState(Variant.string(value));
+
+                switch (value) {
+                    case "none": {
+                        dockPanelsAnimation = StackTransitionType.NONE;
+                        break;
+                    }
+                    case "fade": {
+                        dockPanelsAnimation = StackTransitionType.CROSSFADE;
+                        break;
+                    }
+                    case "left-right": {
+                        dockPanelsAnimation = StackTransitionType.SLIDE_LEFT_RIGHT;
+                        break;
+                    }
+                    case "up-down": {
+                        dockPanelsAnimation = StackTransitionType.SLIDE_UP_DOWN;
+                        break;
+                    }
+                }
+
+                setupDockPanelsAnimation();
+            }
+        });
+
         SimpleAction actionDockPanelsReverse = new SimpleAction("dock-panels-reverse", null);
         actionDockPanelsReverse.onActivate(parameter -> {
             Collections.reverse(dockPanels);
@@ -224,6 +263,7 @@ public class DockWindow {
         customGroup.addAction(actionSettingsPosition);
         customGroup.addAction(actionBarPosition);
         customGroup.addAction(actionBarAlign);
+        customGroup.addAction(actionDockPanelsAnimation);
         customGroup.addAction(actionDockPanelsReverse);
 
         settingsPopoverMenu.insertActionGroup("menu", customGroup);
@@ -289,6 +329,10 @@ public class DockWindow {
         }
     }
 
+    private void setupDockPanelsAnimation(StackTransitionType stackTransitionType) {
+        mainStack.setTransitionType(stackTransitionType);
+    }
+
     private void applyBarPosition(PositionType positionType) {
         switch (positionType) {
             case LEFT: {
@@ -328,6 +372,10 @@ public class DockWindow {
 
     private void setupSettingsPosition() {
         setupSettingsPosition(settingsPosition);
+    }
+
+    private void setupDockPanelsAnimation() {
+        setupDockPanelsAnimation(dockPanelsAnimation);
     }
 
     private void setTitle(String title) {
