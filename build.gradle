@@ -74,6 +74,10 @@ tasks.register('createLinuxAppImage', Exec) {
     args = [
             '--type', 'app-image',
             '--name', 'PawPaint',
+            '--vendor', "${app_vendor}",
+            '--description', "${app_description}",
+            '--copyright', "${app_copyright}",
+            '--app-version', "${win_version}",
             '--input', "${buildDir}/build/jar",
             '--main-jar', "${shadowJar.archiveFileName.get()}",
             '--main-class', "dev.maxbogomol.paw_paint.Main",
