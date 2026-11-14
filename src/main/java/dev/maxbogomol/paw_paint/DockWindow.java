@@ -40,6 +40,7 @@ public class DockWindow {
     private Orientation barOrientation = Orientation.HORIZONTAL;
     private Align barAlign = Align.START;
     private boolean barBoxPositionFront = true;
+    private Align settingsPosition = Align.END;
 
     public DockWindow(Window mainWindow) {
         this.mainWindow = mainWindow;
@@ -60,7 +61,7 @@ public class DockWindow {
         settingsButton.setIconName("open-menu-symbolic");
         settingsButton.setHalign(Align.CENTER);
         settingsButton.setValign(Align.CENTER);
-        settingsButton.addCssClass("flat");
+        settingsButton.setHasFrame(false);
 
         mainStack = new Stack();
         mainStack.setTransitionType(StackTransitionType.SLIDE_LEFT_RIGHT);
@@ -94,10 +95,19 @@ public class DockWindow {
 
         setupBarOrientation();
         setupBarBoxPosition();
+        setupSettingsPosition();
 
         PopoverMenu settingsPopoverMenu = new PopoverMenu();
 
         Menu settingsMainMenu = new Menu();
+
+        Menu settingsSettingsPositionMenu = new Menu();
+
+        settingsSettingsPositionMenu.append("Start", "menu.settings-position::start");
+        settingsSettingsPositionMenu.append("End", "menu.settings-position::end");
+        settingsSettingsPositionMenu.append("Header", "menu.settings-position::header");
+
+        settingsMainMenu.appendSubmenu("Settings position", settingsSettingsPositionMenu);
 
         Menu settingsBarPositionMenu = new Menu();
 
@@ -121,6 +131,31 @@ public class DockWindow {
         settingsPopoverMenu.setMenuModel(settingsMainMenu);
 
         settingsButton.setPopover(settingsPopoverMenu);
+
+        SimpleAction actionSettingsPosition = SimpleAction.stateful("settings-position", VariantTypes.STRING, Variant.string("end"));
+        actionSettingsPosition.onActivate(parameter -> {
+            if (parameter != null) {
+                String value = parameter.getString(null);
+                actionSettingsPosition.setState(Variant.string(value));
+
+                switch (value) {
+                    case "start": {
+                        settingsPosition = Align.START;
+                        break;
+                    }
+                    case "end": {
+                        settingsPosition = Align.END;
+                        break;
+                    }
+                    case "header": {
+                        settingsPosition = Align.CENTER;
+                        break;
+                    }
+                }
+
+                setupSettingsPosition();
+            }
+        });
 
         SimpleAction actionBarPosition = SimpleAction.stateful("bar-position", VariantTypes.STRING, Variant.string("top"));
         actionBarPosition.onActivate(parameter -> {
@@ -186,6 +221,7 @@ public class DockWindow {
         });
 
         SimpleActionGroup customGroup = new SimpleActionGroup();
+        customGroup.addAction(actionSettingsPosition);
         customGroup.addAction(actionBarPosition);
         customGroup.addAction(actionBarAlign);
         customGroup.addAction(actionDockPanelsReverse);
@@ -215,21 +251,6 @@ public class DockWindow {
 
             scrolledTabsBar.setPolicy(PolicyType.NEVER, PolicyType.AUTOMATIC);
         }
-
-        scrolledTabsBar.unparent();
-        settingsBox.unparent();
-
-        barBox.append(scrolledTabsBar);
-        barBox.append(settingsBox);
-
-        /*
-        if (front) {
-            barBox.append(scrolledTabsBar);
-            barBox.append(settingsBox);
-        } else {
-            barBox.append(settingsBox);
-            barBox.append(scrolledTabsBar);
-        }*/
     }
 
     private void setupBarBoxPosition(boolean front) {
@@ -242,6 +263,29 @@ public class DockWindow {
         } else {
             mainBox.append(mainStack);
             mainBox.append(barBox);
+        }
+    }
+
+    private void setupSettingsPosition(Align align) {
+        scrolledTabsBar.unparent();
+        settingsBox.unparent();
+
+        switch (align) {
+            case START: {
+                barBox.append(settingsBox);
+                barBox.append(scrolledTabsBar);
+                break;
+            }
+            case END: {
+                barBox.append(scrolledTabsBar);
+                barBox.append(settingsBox);
+                break;
+            }
+            case CENTER: {
+                barBox.append(scrolledTabsBar);
+                headerBar.packEnd(settingsBox);
+                break;
+            }
         }
     }
 
@@ -280,6 +324,10 @@ public class DockWindow {
 
     private void applyBarPosition() {
         applyBarPosition(barPosition);
+    }
+
+    private void setupSettingsPosition() {
+        setupSettingsPosition(settingsPosition);
     }
 
     private void setTitle(String title) {
