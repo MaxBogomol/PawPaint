@@ -35,9 +35,11 @@ public class DockWindow {
     private final Stack mainStack;
     private final Box mainBox;
 
+    private PositionType barPosition = PositionType.TOP;
+
     private Orientation barOrientation = Orientation.HORIZONTAL;
-    private boolean barOrientationFront = true;
-    private boolean barPositionFront = true;
+    private Align barAlign = Align.START;
+    private boolean barBoxPositionFront = true;
 
     public DockWindow(Window mainWindow) {
         this.mainWindow = mainWindow;
@@ -90,8 +92,8 @@ public class DockWindow {
 
         setTitle("Dock window");
 
-        setupBarOrientation(barOrientation, barOrientationFront);
-        setupBarPosition(barPositionFront);
+        setupBarOrientation();
+        setupBarBoxPosition();
 
         PopoverMenu settingsPopoverMenu = new PopoverMenu();
 
@@ -106,65 +108,100 @@ public class DockWindow {
 
         settingsMainMenu.appendSubmenu("Bar position", settingsBarPositionMenu);
 
-        settingsPopoverMenu.setMenuModel(settingsMainMenu);
+        Menu settingsBarAlignMenu = new Menu();
+
+        settingsBarAlignMenu.append("Start", "menu.bar-align::start");
+        settingsBarAlignMenu.append("Center", "menu.bar-align::center");
+        settingsBarAlignMenu.append("End", "menu.bar-align::end");
+
+        settingsMainMenu.appendSubmenu("Bar align", settingsBarAlignMenu);
+
         settingsMainMenu.append("Reverse", "menu.dock-panels-reverse");
+
+        settingsPopoverMenu.setMenuModel(settingsMainMenu);
 
         settingsButton.setPopover(settingsPopoverMenu);
 
-        SimpleAction action = new SimpleAction("dock-panels-reverse", null);
-        action.onActivate(parameter -> {
+        SimpleAction actionBarPosition = SimpleAction.stateful("bar-position", VariantTypes.STRING, Variant.string("top"));
+        actionBarPosition.onActivate(parameter -> {
+            if (parameter != null) {
+                String value = parameter.getString(null);
+                actionBarPosition.setState(Variant.string(value));
+
+                switch (value) {
+                    case "left": {
+                        barPosition = PositionType.LEFT;
+                        break;
+                    }
+                    case "right": {
+                        barPosition = PositionType.RIGHT;
+                        break;
+                    }
+                    case "top": {
+                        barPosition = PositionType.TOP;
+                        break;
+                    }
+                    case "bottom": {
+                        barPosition = PositionType.BOTTOM;
+                        break;
+                    }
+                }
+
+                applyBarPosition();
+                setupBarOrientation();
+                setupBarBoxPosition();
+            }
+        });
+
+        SimpleAction actionBarAlign = SimpleAction.stateful("bar-align", VariantTypes.STRING, Variant.string("start"));
+        actionBarAlign.onActivate(parameter -> {
+            if (parameter != null) {
+                String value = parameter.getString(null);
+                actionBarAlign.setState(Variant.string(value));
+
+                switch (value) {
+                    case "start": {
+                        barAlign = Align.START;
+                        break;
+                    }
+                    case "center": {
+                        barAlign = Align.CENTER;
+                        break;
+                    }
+                    case "end": {
+                        barAlign = Align.END;
+                        break;
+                    }
+                }
+
+                setupBarOrientation();
+            }
+        });
+
+        SimpleAction actionDockPanelsReverse = new SimpleAction("dock-panels-reverse", null);
+        actionDockPanelsReverse.onActivate(parameter -> {
             Collections.reverse(dockPanels);
             recreateTabs();
             setActiveDockPanel(dockPanels.getFirst());
         });
 
-        SimpleAction action1 = SimpleAction.stateful("bar-position", VariantTypes.STRING, Variant.string("top"));
-        action1.onActivate(parameter -> {
-            String value = parameter.getString(null);
-            action1.setState(Variant.string(value));
-
-            switch (value) {
-                case "left": {
-                    barPositionFront = true;
-                    barOrientation = Orientation.VERTICAL;
-                    break;
-                }
-                case "right": {
-                    barPositionFront = false;
-                    barOrientation = Orientation.VERTICAL;
-                    break;
-                }
-                case "top": {
-                    barPositionFront = true;
-                    barOrientation = Orientation.HORIZONTAL;
-                    break;
-                }
-                case "bottom": {
-                    barPositionFront = false;
-                    barOrientation = Orientation.HORIZONTAL;
-                    break;
-                }
-            }
-
-            setupBarOrientation(barOrientation, barOrientationFront);
-            setupBarPosition(barPositionFront);
-        });
-
         SimpleActionGroup customGroup = new SimpleActionGroup();
-        customGroup.addAction(action);
-        customGroup.addAction(action1);
+        customGroup.addAction(actionBarPosition);
+        customGroup.addAction(actionBarAlign);
+        customGroup.addAction(actionDockPanelsReverse);
 
         settingsPopoverMenu.insertActionGroup("menu", customGroup);
     }
 
-    private void setupBarOrientation(Orientation orientation, boolean front) {
+    private void setupBarOrientation(Orientation orientation, Align align) {
         barBox.setOrientation(orientation);
         tabsBarBox.setOrientation(orientation);
+        mainBox.setOrientation(GuiUtil.oppositeOrientation(orientation));
 
         if (orientation == Orientation.HORIZONTAL) {
             tabsBarBox.setHexpand(true);
             tabsBarBox.setVexpand(false);
-            tabsBarBox.setHalign(front ? Align.START : Align.END);
+            tabsBarBox.setHalign(align);
             tabsBarBox.setValign(Align.FILL);
 
             scrolledTabsBar.setPolicy(PolicyType.AUTOMATIC, PolicyType.NEVER);
@@ -174,26 +211,28 @@ public class DockWindow {
             tabsBarBox.setHexpand(false);
             tabsBarBox.setVexpand(true);
             tabsBarBox.setHalign(Align.FILL);
-            tabsBarBox.setValign(front ? Align.START : Align.END);
+            tabsBarBox.setValign(align);
 
             scrolledTabsBar.setPolicy(PolicyType.NEVER, PolicyType.AUTOMATIC);
-
-            mainBox.setOrientation(Orientation.HORIZONTAL);
         }
 
         scrolledTabsBar.unparent();
         settingsBox.unparent();
 
+        barBox.append(scrolledTabsBar);
+        barBox.append(settingsBox);
+
+        /*
         if (front) {
             barBox.append(scrolledTabsBar);
             barBox.append(settingsBox);
         } else {
             barBox.append(settingsBox);
             barBox.append(scrolledTabsBar);
-        }
+        }*/
     }
 
-    private void setupBarPosition(boolean front) {
+    private void setupBarBoxPosition(boolean front) {
         barBox.unparent();
         mainStack.unparent();
 
@@ -204,6 +243,43 @@ public class DockWindow {
             mainBox.append(mainStack);
             mainBox.append(barBox);
         }
+    }
+
+    private void applyBarPosition(PositionType positionType) {
+        switch (positionType) {
+            case LEFT: {
+                barOrientation = Orientation.VERTICAL;
+                barBoxPositionFront = true;
+                break;
+            }
+            case RIGHT: {
+                barOrientation = Orientation.VERTICAL;
+                barBoxPositionFront = false;
+                break;
+            }
+            case TOP: {
+                barOrientation = Orientation.HORIZONTAL;
+                barBoxPositionFront = true;
+                break;
+            }
+            case BOTTOM: {
+                barOrientation = Orientation.HORIZONTAL;
+                barBoxPositionFront = false;
+                break;
+            }
+        }
+    }
+
+    private void setupBarOrientation() {
+        setupBarOrientation(barOrientation, barAlign);
+    }
+
+    private void setupBarBoxPosition() {
+        setupBarBoxPosition(barBoxPositionFront);
+    }
+
+    private void applyBarPosition() {
+        applyBarPosition(barPosition);
     }
 
     private void setTitle(String title) {
