@@ -131,7 +131,7 @@ public class DockWindow {
 
         //Settings position
         settingsSettingsPositionMenu = new Menu();
-        setupSettingsSettingsPositionMenu( true);
+        setupSettingsSettingsPositionMenu(headerBarShow);
 
         //Header bar show
         Menu settingsHeaderBarShowMenu = new Menu();
@@ -505,6 +505,7 @@ public class DockWindow {
             }
         } else {
             window.close();
+            mainWidgetBox.unparent();
         }
     }
 
@@ -577,7 +578,7 @@ public class DockWindow {
 
     private void onTabDragEnd(Drag drag, boolean success, IDockPanel dockPanel) {
         if (!success) {
-            if (dockPanels.size() > 1) {
+            if (dockPanels.size() > 1 || !isWindow) {
                 removeDockPanel(dockPanel);
 
                 DockWindow newWindow = new DockWindow(this.mainWindow);
