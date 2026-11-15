@@ -108,15 +108,17 @@ public class DockWindow {
 
         setTitle("Dock window");
 
+        if (!isWindow) {
+            headerBarShow = false;
+        }
+
         createSettingsMenu();
 
         setupSettingsPosition();
         setupBarOrientation();
         setupBarBoxPosition();
         setupDockPanelsAnimation();
-        if (!isWindow) {
-            setupHeaderBarShow();
-        }
+        setupHeaderBarShow();
     }
 
     public DockWindow(Window mainWindow) {
@@ -212,7 +214,7 @@ public class DockWindow {
             }
         });
 
-        SimpleAction actionHeaderBarShow = SimpleAction.stateful("header-show", VariantTypes.STRING, Variant.string("show"));
+        SimpleAction actionHeaderBarShow = SimpleAction.stateful("header-show", VariantTypes.STRING, Variant.string("hide"));
         actionHeaderBarShow.onActivate(parameter -> {
             if (parameter != null) {
                 String value = parameter.getString(null);

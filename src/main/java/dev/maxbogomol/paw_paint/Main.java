@@ -44,6 +44,7 @@ public class Main {
             DockWindow dockWindow1 = new DockWindow(window);
             DockWindow dockWindow2 = new DockWindow(window);
             DockWindow dockWindow3 = new DockWindow(window, false);
+            DockWindow dockWindow4 = new DockWindow(window, false);
 
             dockWindow1.addDockPanel(new SimpleDockPanel("test1", "weather-clear-symbolic"));
             dockWindow1.addDockPanel(new SimpleDockPanel("test2", "document-new-symbolic"));
@@ -52,8 +53,39 @@ public class Main {
             dockWindow2.addDockPanel(new SimpleDockPanel("test5", "document-send-symbolic"));
             dockWindow2.addDockPanel(new SimpleDockPanel("test6", "input-gaming-symbolic"));
             dockWindow3.addDockPanel(new SimpleDockPanel("test7"));
+            dockWindow4.addDockPanel(new SimpleDockPanel("test8"));
 
-            window.setChild(dockWindow3.getMainWidgetBox());
+            Box mainBox = new Box(Orientation.VERTICAL, 0);
+            mainBox.setHalign(Align.CENTER);
+            mainBox.setValign(Align.CENTER);
+            mainBox.setHexpand(true);
+            mainBox.setVexpand(true);
+
+            Label mainLabel = new Label("Main WAWA");
+
+            mainBox.append(mainLabel);
+
+            Paned paned = new Paned(Orientation.HORIZONTAL);
+            paned.setResizeStartChild(false);
+            paned.setResizeEndChild(true);
+            paned.setShrinkStartChild(false);
+            paned.setShrinkEndChild(false);
+            paned.setWideHandle(true);
+
+            Paned paned1 = new Paned(Orientation.HORIZONTAL);
+            paned1.setResizeStartChild(true);
+            paned1.setResizeEndChild(false);
+            paned1.setShrinkStartChild(true);
+            paned1.setShrinkEndChild(false);
+            paned1.setWideHandle(true);
+
+            paned.setStartChild(dockWindow3.getMainWidgetBox());
+            paned.setEndChild(paned1);
+
+            paned1.setStartChild(mainBox);
+            paned1.setEndChild(dockWindow4.getMainWidgetBox());
+
+            window.setChild(paned);
         });
         app.run(args);
     }
