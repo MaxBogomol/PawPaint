@@ -23,6 +23,8 @@ public class DockWindow {
     private final Window mainWindow;
     private final Window window;
     private final HeaderBar headerBar;
+    private final Box mainWidgetBox;
+    private final boolean isWindow;
 
     private final Label titleLabel;
     private final Button icon;
@@ -35,16 +37,20 @@ public class DockWindow {
     private final Stack mainStack;
     private final Box mainBox;
 
+    private Menu settingsSettingsPositionMenu;
+
     private PositionType barPosition = PositionType.TOP;
 
+    private Align settingsPosition = Align.END;
+    private boolean headerBarShow = true;
     private Orientation barOrientation = Orientation.HORIZONTAL;
     private Align barAlign = Align.START;
     private boolean barBoxPositionFront = true;
-    private Align settingsPosition = Align.END;
     private StackTransitionType dockPanelsAnimation = StackTransitionType.SLIDE_LEFT_RIGHT;
 
-    public DockWindow(Window mainWindow) {
+    public DockWindow(Window mainWindow, boolean isWindow) {
         this.mainWindow = mainWindow;
+        this.isWindow = isWindow;
 
         titleLabel = new Label();
         titleLabel.setEllipsize(EllipsizeMode.END);
@@ -85,20 +91,36 @@ public class DockWindow {
         mainBox = new Box(Orientation.VERTICAL, 0);
 
         window = new Window();
-        window.setDefaultSize(200, 200);
-        window.setTitlebar(headerBar);
-        window.setChild(mainBox);
-        window.setTransientFor(mainWindow);
-        window.present();
+
+        mainWidgetBox = new Box(Orientation.VERTICAL, 0);
+
+        if (isWindow) {
+            window.setDefaultSize(200, 200);
+            window.setTitlebar(headerBar);
+            window.setChild(mainBox);
+            window.setTransientFor(mainWindow);
+            window.present();
+        } else {
+            headerBar.setShowTitleButtons(false);
+            mainWidgetBox.append(headerBar);
+            mainWidgetBox.append(mainBox);
+        }
 
         setTitle("Dock window");
 
         createSettingsMenu();
 
+        setupSettingsPosition();
         setupBarOrientation();
         setupBarBoxPosition();
-        setupSettingsPosition();
         setupDockPanelsAnimation();
+        if (!isWindow) {
+            setupHeaderBarShow();
+        }
+    }
+
+    public DockWindow(Window mainWindow) {
+        this(mainWindow, true);
     }
 
     private void createSettingsMenu() {
@@ -107,13 +129,16 @@ public class DockWindow {
 
         Menu settingsMainMenu = new Menu();
 
-        Menu settingsSettingsPositionMenu = new Menu();
-        settingsSettingsPositionMenu.append("Start", "menu.settings-position::start");
-        settingsSettingsPositionMenu.append("End", "menu.settings-position::end");
-        settingsSettingsPositionMenu.append("Header", "menu.settings-position::header");
+        //Settings position
+        settingsSettingsPositionMenu = new Menu();
+        setupSettingsSettingsPositionMenu( true);
 
-        settingsMainMenu.appendSubmenu("Position", settingsSettingsPositionMenu);
+        //Header bar show
+        Menu settingsHeaderBarShowMenu = new Menu();
+        settingsHeaderBarShowMenu.append("Show", "menu.header-show::show");
+        settingsHeaderBarShowMenu.append("Hide", "menu.header-show::hide");
 
+        //Bar
         Menu settingsBarMenu = new Menu();
 
         Menu settingsBarPositionMenu = new Menu();
@@ -122,16 +147,15 @@ public class DockWindow {
         settingsBarPositionMenu.append("Top", "menu.bar-position::top");
         settingsBarPositionMenu.append("Bottom", "menu.bar-position::bottom");
 
-        settingsBarMenu.appendSubmenu("Position", settingsBarPositionMenu);
-
         Menu settingsBarAlignMenu = new Menu();
         settingsBarAlignMenu.append("Start", "menu.bar-align::start");
         settingsBarAlignMenu.append("Center", "menu.bar-align::center");
         settingsBarAlignMenu.append("End", "menu.bar-align::end");
 
+        settingsBarMenu.appendSubmenu("Position", settingsBarPositionMenu);
         settingsBarMenu.appendSubmenu("Align", settingsBarAlignMenu);
-        settingsMainMenu.appendSubmenu("Bar", settingsBarMenu);
 
+        //Dock-panels
         Menu settingsDockPanelsMenu = new Menu();
 
         Menu settingsDockPanelsAnimationMenu = new Menu();
@@ -143,12 +167,23 @@ public class DockWindow {
         settingsDockPanelsMenu.appendSubmenu("Animation", settingsDockPanelsAnimationMenu);
         settingsDockPanelsMenu.append("Reverse", "menu.dock-panels-reverse");
 
+        //Main
+        settingsMainMenu.appendSubmenu("Position", settingsSettingsPositionMenu);
+        if (!isWindow) settingsMainMenu.appendSubmenu("Header", settingsHeaderBarShowMenu);
+        settingsMainMenu.appendSubmenu("Bar", settingsBarMenu);
         settingsMainMenu.appendSubmenu("Dock-panels", settingsDockPanelsMenu);
 
         settingsPopoverMenu.setMenuModel(settingsMainMenu);
         settingsButton.setPopover(settingsPopoverMenu);
 
         createSettingMenuActions(settingsPopoverMenu);
+    }
+
+    private void setupSettingsSettingsPositionMenu(boolean header) {
+        settingsSettingsPositionMenu.removeAll();
+        settingsSettingsPositionMenu.append("Start", "menu.settings-position::start");
+        settingsSettingsPositionMenu.append("End", "menu.settings-position::end");
+        if (header) settingsSettingsPositionMenu.append("Header", "menu.settings-position::header");
     }
 
     private void createSettingMenuActions(PopoverMenu popoverMenu) {
@@ -174,6 +209,33 @@ public class DockWindow {
                 }
 
                 setupSettingsPosition();
+            }
+        });
+
+        SimpleAction actionHeaderBarShow = SimpleAction.stateful("header-show", VariantTypes.STRING, Variant.string("show"));
+        actionHeaderBarShow.onActivate(parameter -> {
+            if (parameter != null) {
+                String value = parameter.getString(null);
+                actionHeaderBarShow.setState(Variant.string(value));
+
+                switch (value) {
+                    case "show": {
+                        headerBarShow = true;
+                        break;
+                    }
+                    case "hide": {
+                        headerBarShow = false;
+                        if (settingsPosition == Align.CENTER) {
+                            settingsPosition = Align.END;
+                            actionSettingsPosition.setState(Variant.string("end"));
+                            setupSettingsPosition();
+                        }
+                        break;
+                    }
+                }
+
+                setupSettingsSettingsPositionMenu(headerBarShow);
+                setupHeaderBarShow();
             }
         });
 
@@ -271,12 +333,40 @@ public class DockWindow {
 
         SimpleActionGroup customGroup = new SimpleActionGroup();
         customGroup.addAction(actionSettingsPosition);
+        customGroup.addAction(actionHeaderBarShow);
         customGroup.addAction(actionBarPosition);
         customGroup.addAction(actionBarAlign);
         customGroup.addAction(actionDockPanelsAnimation);
         customGroup.addAction(actionDockPanelsReverse);
 
         popoverMenu.insertActionGroup("menu", customGroup);
+    }
+
+    private void setupSettingsPosition(Align align) {
+        scrolledTabsBar.unparent();
+        settingsBox.unparent();
+
+        switch (align) {
+            case START: {
+                barBox.append(settingsBox);
+                barBox.append(scrolledTabsBar);
+                break;
+            }
+            case END: {
+                barBox.append(scrolledTabsBar);
+                barBox.append(settingsBox);
+                break;
+            }
+            case CENTER: {
+                barBox.append(scrolledTabsBar);
+                headerBar.packEnd(settingsBox);
+                break;
+            }
+        }
+    }
+
+    private void setupHeaderBarShow(boolean show) {
+        headerBar.setVisible(show);
     }
 
     private void setupBarOrientation(Orientation orientation, Align align) {
@@ -316,29 +406,6 @@ public class DockWindow {
         }
     }
 
-    private void setupSettingsPosition(Align align) {
-        scrolledTabsBar.unparent();
-        settingsBox.unparent();
-
-        switch (align) {
-            case START: {
-                barBox.append(settingsBox);
-                barBox.append(scrolledTabsBar);
-                break;
-            }
-            case END: {
-                barBox.append(scrolledTabsBar);
-                barBox.append(settingsBox);
-                break;
-            }
-            case CENTER: {
-                barBox.append(scrolledTabsBar);
-                headerBar.packEnd(settingsBox);
-                break;
-            }
-        }
-    }
-
     private void setupDockPanelsAnimation(StackTransitionType stackTransitionType) {
         mainStack.setTransitionType(stackTransitionType);
     }
@@ -368,6 +435,14 @@ public class DockWindow {
         }
     }
 
+    private void setupSettingsPosition() {
+        setupSettingsPosition(settingsPosition);
+    }
+
+    private void setupHeaderBarShow() {
+        setupHeaderBarShow(headerBarShow);
+    }
+
     private void setupBarOrientation() {
         setupBarOrientation(barOrientation, barAlign);
     }
@@ -378,10 +453,6 @@ public class DockWindow {
 
     private void applyBarPosition() {
         applyBarPosition(barPosition);
-    }
-
-    private void setupSettingsPosition() {
-        setupSettingsPosition(settingsPosition);
     }
 
     private void setupDockPanelsAnimation() {
@@ -439,6 +510,14 @@ public class DockWindow {
 
     public List<IDockPanel> getDockPanels() {
         return dockPanels;
+    }
+
+    public Box getMainWidgetBox() {
+        return mainWidgetBox;
+    }
+
+    public boolean getIsWindow() {
+        return isWindow;
     }
 
     private void createTab(IDockPanel dockPanel) {

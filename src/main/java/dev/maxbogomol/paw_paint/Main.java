@@ -43,7 +43,7 @@ public class Main {
 
             DockWindow dockWindow1 = new DockWindow(window);
             DockWindow dockWindow2 = new DockWindow(window);
-            DockWindow dockWindow3 = new DockWindow(window);
+            DockWindow dockWindow3 = new DockWindow(window, false);
 
             dockWindow1.addDockPanel(new SimpleDockPanel("test1", "weather-clear-symbolic"));
             dockWindow1.addDockPanel(new SimpleDockPanel("test2", "document-new-symbolic"));
@@ -52,6 +52,8 @@ public class Main {
             dockWindow2.addDockPanel(new SimpleDockPanel("test5", "document-send-symbolic"));
             dockWindow2.addDockPanel(new SimpleDockPanel("test6", "input-gaming-symbolic"));
             dockWindow3.addDockPanel(new SimpleDockPanel("test7"));
+
+            window.setChild(dockWindow3.getMainWidgetBox());
         });
         app.run(args);
     }
