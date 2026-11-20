@@ -68,15 +68,14 @@ public class DockWindow {
 
         settingsButton = new MenuButton();
         settingsButton.setIconName("open-menu-symbolic");
-        settingsButton.setHalign(Align.CENTER);
-        settingsButton.setValign(Align.CENTER);
-        settingsButton.setHasFrame(false);
+        settingsButton.addCssClass("flat");
 
         headerBarBox = new CenterBox();
         headerBarBox.addCssClass("toolbar");
         headerBarSeparator = new Separator();
 
         mainStack = new Stack();
+        mainStack.addCssClass("toolbar");
 
         barBox = new Box(Orientation.HORIZONTAL, 0);
         barBox.addCssClass("toolbar");
@@ -360,6 +359,8 @@ public class DockWindow {
     private void setupSettingsPosition(Align align) {
         scrolledTabsBar.unparent();
         settingsBox.unparent();
+        headerBarBox.setEndWidget(null);
+        settingsButton.setHasFrame(true);
 
         switch (align) {
             case START: {
@@ -376,6 +377,7 @@ public class DockWindow {
                 barBox.append(scrolledTabsBar);
                 if (isWindow) {
                     headerBar.packEnd(settingsBox);
+                    settingsButton.setHasFrame(false);
                 } else {
                     headerBarBox.setEndWidget(settingsBox);
                 }
