@@ -1,5 +1,6 @@
-package dev.maxbogomol.paw_paint;
+package dev.maxbogomol.paw_paint.gui.dock_window;
 
+import dev.maxbogomol.paw_paint.gui.dock_window.dock_panel.IDockPanel;
 import org.gnome.glib.Type;
 import org.gnome.gtk.Button;
 import org.javagi.gobject.types.Types;

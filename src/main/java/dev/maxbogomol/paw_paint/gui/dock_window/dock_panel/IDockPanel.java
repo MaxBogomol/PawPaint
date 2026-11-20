@@ -1,4 +1,4 @@
-package dev.maxbogomol.paw_paint;
+package dev.maxbogomol.paw_paint.gui.dock_window.dock_panel;
 
 import org.gnome.gtk.Widget;
 

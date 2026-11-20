@@ -1,4 +1,4 @@
-package dev.maxbogomol.paw_paint;
+package dev.maxbogomol.paw_paint.core.layer;
 
 public class Tile {
     private final byte[] data;

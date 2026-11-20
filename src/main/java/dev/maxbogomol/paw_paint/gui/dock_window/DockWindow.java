@@ -1,5 +1,7 @@
-package dev.maxbogomol.paw_paint;
+package dev.maxbogomol.paw_paint.gui.dock_window;
 
+import dev.maxbogomol.paw_paint.gui.dock_window.dock_panel.IDockPanel;
+import dev.maxbogomol.paw_paint.util.GuiUtil;
 import org.gnome.gdk.ContentProvider;
 import org.gnome.gdk.Drag;
 import org.gnome.gdk.DragAction;
