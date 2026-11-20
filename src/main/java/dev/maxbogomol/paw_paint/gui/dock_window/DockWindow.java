@@ -32,12 +32,16 @@ public class DockWindow {
     private final Button icon;
     private final MenuButton settingsButton;
 
+    private final CenterBox headerBarBox;
+    private final Separator headerBarSeparator;
+
     private final Box barBox;
     private final Box tabsBarBox;
     private final Box settingsBox;
     private final ScrolledWindow scrolledTabsBar;
     private final Stack mainStack;
     private final Box mainBox;
+    private final Separator mainSeparator;
 
     private Menu settingsSettingsPositionMenu;
 
@@ -62,20 +66,20 @@ public class DockWindow {
         icon.addCssClass("circular");
         icon.addCssClass("flat");
 
-        headerBar = new HeaderBar();
-        headerBar.setTitleWidget(titleLabel);
-        headerBar.packStart(icon);
-
         settingsButton = new MenuButton();
         settingsButton.setIconName("open-menu-symbolic");
         settingsButton.setHalign(Align.CENTER);
         settingsButton.setValign(Align.CENTER);
         settingsButton.setHasFrame(false);
 
+        headerBarBox = new CenterBox();
+        headerBarBox.addCssClass("toolbar");
+        headerBarSeparator = new Separator();
+
         mainStack = new Stack();
 
         barBox = new Box(Orientation.HORIZONTAL, 0);
-        barBox.addCssClass("pawpaint-tabs-bar");
+        barBox.addCssClass("toolbar");
 
         tabsBarBox = new Box(Orientation.HORIZONTAL, 0);
         tabsBarBox.addCssClass("linked");
@@ -91,8 +95,11 @@ public class DockWindow {
         settingsBox.append(settingsButton);
 
         mainBox = new Box(Orientation.VERTICAL, 0);
+        mainBox.addCssClass("view");
+        mainSeparator = new Separator();
 
         window = new Window();
+        headerBar = new HeaderBar();
 
         mainWidgetBox = new Box(Orientation.VERTICAL, 0);
 
@@ -102,10 +109,14 @@ public class DockWindow {
             window.setChild(mainBox);
             window.setTransientFor(mainWindow);
             window.present();
+            headerBar.setTitleWidget(titleLabel);
+            headerBar.packStart(icon);
         } else {
-            headerBar.setShowTitleButtons(false);
-            mainWidgetBox.append(headerBar);
+            mainWidgetBox.append(headerBarBox);
+            mainWidgetBox.append(headerBarSeparator);
             mainWidgetBox.append(mainBox);
+            headerBarBox.setCenterWidget(titleLabel);
+            headerBarBox.setStartWidget(icon);
         }
 
         setTitle("Dock window");
@@ -363,14 +374,19 @@ public class DockWindow {
             }
             case CENTER: {
                 barBox.append(scrolledTabsBar);
-                headerBar.packEnd(settingsBox);
+                if (isWindow) {
+                    headerBar.packEnd(settingsBox);
+                } else {
+                    headerBarBox.setEndWidget(settingsBox);
+                }
                 break;
             }
         }
     }
 
     private void setupHeaderBarShow(boolean show) {
-        headerBar.setVisible(show);
+        headerBarBox.setVisible(show);
+        headerBarSeparator.setVisible(show);
     }
 
     private void setupBarOrientation(Orientation orientation, Align align) {
@@ -399,13 +415,16 @@ public class DockWindow {
 
     private void setupBarBoxPosition(boolean front) {
         barBox.unparent();
+        mainSeparator.unparent();
         mainStack.unparent();
 
         if (front) {
             mainBox.append(barBox);
+            mainBox.append(mainSeparator);
             mainBox.append(mainStack);
         } else {
             mainBox.append(mainStack);
+            mainBox.append(mainSeparator);
             mainBox.append(barBox);
         }
     }

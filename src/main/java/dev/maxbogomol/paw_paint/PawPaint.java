@@ -1,5 +1,7 @@
 package dev.maxbogomol.paw_paint;
 
+import dev.maxbogomol.paw_paint.gui.dock_window.DockWindow;
+import dev.maxbogomol.paw_paint.gui.dock_window.dock_panel.SimpleDockPanel;
 import org.gnome.gdk.Display;
 import org.gnome.gio.ApplicationFlags;
 import org.gnome.gtk.*;
@@ -40,24 +42,14 @@ public class PawPaint {
         applicationWindow.setTitlebar(headerBar);
         applicationWindow.present();
 
-        Box mainBox = new Box(Orientation.HORIZONTAL, 0);
-        mainBox.setHalign(Align.CENTER);
-        mainBox.setValign(Align.CENTER);
-        mainBox.setHexpand(true);
-        mainBox.setVexpand(true);
+        DockWindow dockWindow1 = new DockWindow(applicationWindow, false);
 
-        DrawingArea drawingArea = new DrawingArea();
-        drawingArea.setContentWidth(100);
-        drawingArea.setContentHeight(100);
+        dockWindow1.addDockPanel(new SimpleDockPanel("test1", "weather-clear-symbolic"));
+        dockWindow1.addDockPanel(new SimpleDockPanel("test2", "document-new-symbolic"));
+        dockWindow1.addDockPanel(new SimpleDockPanel("test3", "edit-delete-symbolic"));
+        dockWindow1.addDockPanel(new SimpleDockPanel("test4", "format-justify-fill-symbolic"));
 
-        drawingArea.setDrawFunc((area, cr, width, height) -> {
-            cr.setSourceRGB(1.0, 0.0, 1.0);
-            cr.paint();
-        });
-
-        mainBox.append(drawingArea);
-
-        applicationWindow.setChild(mainBox);
+        applicationWindow.setChild(dockWindow1.getMainWidgetBox());
     }
 
     private void loadCssStyle() {
