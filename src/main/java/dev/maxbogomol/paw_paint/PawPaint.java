@@ -13,57 +13,57 @@ public class PawPaint {
     public static final String APPLICATION_NAME = "Paw Paint";
 
     public static PawPaint instance;
-
     private final Application application;
     private ApplicationWindow applicationWindow;
+    private Label titleLabel;
+    private HeaderBar headerBar;
 
     public PawPaint() {
         application = new Application(APPLICATION_ID, ApplicationFlags.DEFAULT_FLAGS);
         application.onActivate(() -> {
-            applicationWindow = new ApplicationWindow(application);
-            applicationWindow.setTitle(APPLICATION_NAME);
-            applicationWindow.setDefaultSize(400, 400);
-
-            Label titleLabel = new Label(APPLICATION_NAME);
-            titleLabel.addCssClass("title");
-
-            HeaderBar headerBar = new HeaderBar();
-            headerBar.setTitleWidget(titleLabel);
-
-            applicationWindow.setTitlebar(headerBar);
-            applicationWindow.present();
-
-            loadCss();
-
-            Box mainBox = new Box(Orientation.HORIZONTAL, 0);
-            mainBox.setHalign(Align.CENTER);
-            mainBox.setValign(Align.CENTER);
-            mainBox.setHexpand(true);
-            mainBox.setVexpand(true);
-
-            DrawingArea drawingArea = new DrawingArea();
-            drawingArea.setContentWidth(100);
-            drawingArea.setContentHeight(100);
-
-            drawingArea.setDrawFunc((area, cr, width, height) -> {
-                cr.setSourceRGB(1.0, 0.0, 1.0);
-                cr.paint();
-            });
-
-            mainBox.append(drawingArea);
-
-            applicationWindow.setChild(mainBox);
+            createWindow();
+            loadCssStyle();
         });
     }
 
-    public void runApplication(String[] args) {
-        application.run(args);
+    private void createWindow() {
+        applicationWindow = new ApplicationWindow(application);
+        applicationWindow.setTitle(APPLICATION_NAME);
+        applicationWindow.setDefaultSize(400, 400);
+
+        titleLabel = new Label(APPLICATION_NAME);
+        titleLabel.addCssClass("title");
+
+        headerBar = new HeaderBar();
+        headerBar.setTitleWidget(titleLabel);
+
+        applicationWindow.setTitlebar(headerBar);
+        applicationWindow.present();
+
+        Box mainBox = new Box(Orientation.HORIZONTAL, 0);
+        mainBox.setHalign(Align.CENTER);
+        mainBox.setValign(Align.CENTER);
+        mainBox.setHexpand(true);
+        mainBox.setVexpand(true);
+
+        DrawingArea drawingArea = new DrawingArea();
+        drawingArea.setContentWidth(100);
+        drawingArea.setContentHeight(100);
+
+        drawingArea.setDrawFunc((area, cr, width, height) -> {
+            cr.setSourceRGB(1.0, 0.0, 1.0);
+            cr.paint();
+        });
+
+        mainBox.append(drawingArea);
+
+        applicationWindow.setChild(mainBox);
     }
 
-    public void loadCss() {
+    private void loadCssStyle() {
         CssProvider cssProvider = new CssProvider();
 
-        try (InputStream inputStream = Main.class.getResourceAsStream("/style.css")) {
+        try (InputStream inputStream = Main.class.getResourceAsStream("/styles/style.css")) {
             if (inputStream != null) {
                 cssProvider.loadFromBytes(inputStream.readAllBytes());
             }
@@ -75,6 +75,10 @@ public class PawPaint {
                 cssProvider,
                 Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
         );
+    }
+
+    public void runApplication(String[] args) {
+        application.run(args);
     }
 
     public PawPaint getInstance() {

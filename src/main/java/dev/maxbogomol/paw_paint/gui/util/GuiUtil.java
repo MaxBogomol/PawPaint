@@ -1,4 +1,4 @@
-package dev.maxbogomol.paw_paint.util;
+package dev.maxbogomol.paw_paint.gui.util;
 
 import org.gnome.gtk.Orientation;
 
