@@ -77,7 +77,7 @@ public class PawPaint {
         ImageSurface surface = ImageSurface.create(Format.ARGB32, size, size);
         MemorySegment data = surface.getData();
         int stride = surface.getStride();
-        int channelValue = colorFormat.getChannelValue();
+        int channelValue = 255;
 
         for (int y = 0; y < size; y++) {
             for (int x = 0; x < size; x++) {

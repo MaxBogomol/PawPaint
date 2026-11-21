@@ -12,7 +12,7 @@ public class RGBA8ColorFormat extends ColorFormat {
     }
 
     @Override
-    public int getChannelValue() {
+    public long getChannelValue() {
         return 255;
     }
 

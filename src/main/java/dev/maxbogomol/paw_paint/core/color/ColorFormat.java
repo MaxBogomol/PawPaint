@@ -13,7 +13,7 @@ public abstract class ColorFormat {
 
     public abstract int getBytesPerPixel();
     public abstract int getBitDepth();
-    public abstract int getChannelValue();
+    public abstract long getChannelValue();
 
     public abstract void encode(float r, float g, float b, float a, byte[] pixelData);
     public abstract void decode(float[] out , byte[] pixelData);
