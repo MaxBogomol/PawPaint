@@ -13,6 +13,8 @@ import java.util.Objects;
 public class PawPaint {
     private static final String APPLICATION_ID = "dev.maxbogomol.paw_paint";
     public static final String APPLICATION_NAME = "Paw Paint";
+    private static final int STANDARD_WIDTH = 1024;
+    private static final int STANDARD_HEIGHT = 768;
 
     public static PawPaint instance;
     private final Application application;
@@ -31,7 +33,7 @@ public class PawPaint {
     private void createWindow() {
         applicationWindow = new ApplicationWindow(application);
         applicationWindow.setTitle(APPLICATION_NAME);
-        applicationWindow.setDefaultSize(400, 400);
+        applicationWindow.setDefaultSize(STANDARD_WIDTH, STANDARD_HEIGHT);
 
         titleLabel = new Label(APPLICATION_NAME);
         titleLabel.addCssClass("title");

@@ -19,6 +19,9 @@ import java.util.Collections;
 import java.util.List;
 
 public class DockWindow {
+    private static final int STANDARD_WIDTH = 256;
+    private static final int STANDARD_HEIGHT = 384;
+
     private final List<IDockPanel> dockPanels = new ArrayList<>();
     private IDockPanel activeDockPanel;
 
@@ -103,7 +106,7 @@ public class DockWindow {
         mainWidgetBox = new Box(Orientation.VERTICAL, 0);
 
         if (isWindow) {
-            window.setDefaultSize(200, 200);
+            window.setDefaultSize(STANDARD_WIDTH, STANDARD_HEIGHT);
             window.setTitlebar(headerBar);
             window.setChild(mainBox);
             window.setTransientFor(mainWindow);
