@@ -12,9 +12,7 @@ public class LinearBlendMode extends BlendMode {
         out[3] = ao;
 
         if (ao == 0) {
-            out[0] = 0;
-            out[1] = 0;
-            out[2] = 0;
+            out[0] = out[1] = out[2] = 0;
         } else {
             float aoInverted = 1.0f / ao;
             float adFactor = (1.0f - as) * ad;

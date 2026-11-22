@@ -24,7 +24,7 @@ public class ColorUtil {
         return 0.2126f * r + 0.7152f * g + 0.0722f * b;
     }
 
-    public static float RGBtoGrayscaleSimple(float r, float g, float b) {
+    public static float rgbToGrayscaleSimple(float r, float g, float b) {
         return (r + g + b) / 3;
     }
 
