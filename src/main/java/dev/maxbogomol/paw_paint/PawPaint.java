@@ -2,7 +2,8 @@ package dev.maxbogomol.paw_paint;
 
 import dev.maxbogomol.paw_paint.core.color.ColorFormat;
 import dev.maxbogomol.paw_paint.core.color.ColorFormats;
-import dev.maxbogomol.paw_paint.core.layer.TileMap;
+import dev.maxbogomol.paw_paint.core.layer.Layer;
+import dev.maxbogomol.paw_paint.core.util.ColorUtil;
 import org.freedesktop.cairo.Antialias;
 import org.freedesktop.cairo.Format;
 import org.freedesktop.cairo.ImageSurface;
@@ -53,42 +54,58 @@ public class PawPaint {
         int size = 256;
 
         ColorFormat colorFormat = ColorFormats.RGBA8;
-        colorFormat.createPixelData();
+        byte[] pixelData = colorFormat.createPixelData();
         float[] color = ColorFormat.createColor();
 
-        TileMap tileMap = new TileMap(64, colorFormat.getBytesPerPixel());
+        Layer layer = new Layer(colorFormat, size, size);
 
         for (int y = 0; y < size; y++) {
             for (int x = 0; x < size; x++) {
-                colorFormat.encode((float) x / size, (float) y / size, 0.0f, 1.0f, colorFormat.getPixelData());
-                tileMap.setPixel(x, y, colorFormat.getPixelData());
+                ColorUtil.setColor((float) x / size, (float) y / size, 0.0f, 1.0f, color);
+                layer.setPixel(x, y, color, pixelData);
             }
         }
 
-        ImageSurface surface = ImageSurface.create(Format.ARGB32, size, size);
+        boolean intSurface = colorFormat.getBitDepth() <= 8;
+
+        ImageSurface surface = ImageSurface.create(intSurface ? Format.ARGB32 : Format.RGBA128F, size, size);
         MemorySegment data = surface.getData();
         int stride = surface.getStride();
         int channelValue = 255;
 
         for (int y = 0; y < size; y++) {
             for (int x = 0; x < size; x++) {
-                tileMap.getPixel(x, y, colorFormat.getPixelData());
-                colorFormat.decode(color, colorFormat.getPixelData());
+                layer.getPixel(x, y, color, pixelData);
 
-                int argb = 0;
+                float red = ColorFormat.getRed(color);
+                float green = ColorFormat.getGreen(color);
+                float blue = ColorFormat.getBlue(color);
                 float alpha = ColorFormat.getAlpha(color);
 
-                if (alpha > 0) {
-                    float mult = alpha * channelValue;
-                    int r = (int) (ColorFormat.getRed(color) * mult);
-                    int g = (int) (ColorFormat.getGreen(color) * mult);
-                    int b = (int) (ColorFormat.getBlue(color) * mult);
-                    int a = (int) (mult);
+                if (intSurface) {
+                    int argb = 0;
 
-                    argb = (a << 24) | (r << 16) | (g << 8) | b;
+                    if (alpha > 0) {
+                        float mult = alpha * channelValue;
+                        int r = (int) (red * mult);
+                        int g = (int) (green * mult);
+                        int b = (int) (blue * mult);
+                        int a = (int) (mult);
+
+                        argb = (a << 24) | (r << 16) | (g << 8) | b;
+                    }
+
+                    long pixelOffset = (long) y * stride + x * 4L;
+                    data.set(ValueLayout.JAVA_INT, pixelOffset, argb);
+                } else {
+                    if (alpha == 0) red = green = blue = alpha = 0;
+
+                    long pixelOffset = (long) y * stride + x * 16L;
+                    data.set(ValueLayout.JAVA_FLOAT, pixelOffset, red);
+                    data.set(ValueLayout.JAVA_FLOAT, pixelOffset + 4, green);
+                    data.set(ValueLayout.JAVA_FLOAT, pixelOffset + 8, blue);
+                    data.set(ValueLayout.JAVA_FLOAT, pixelOffset + 12, alpha);
                 }
-
-                data.set(ValueLayout.JAVA_INT, (long) y * stride + x * 4L, argb);
             }
         }
         surface.markDirty();
