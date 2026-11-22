@@ -47,7 +47,7 @@ public class Layer extends LayerNode {
             tileMap.getPixel(x, y, pixelData);
             colorFormat.decode(color, pixelData);
         } else {
-            ColorUtil.copyColor(Colors.ALPHA, color);
+            ColorUtil.copyColor(Colors.BLACK, color);
         }
     }
 

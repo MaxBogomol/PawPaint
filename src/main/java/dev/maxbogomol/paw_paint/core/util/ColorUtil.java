@@ -39,4 +39,10 @@ public class ColorUtil {
         if (c <= 0.0031308f) return c * 12.92f;
         return (float) (1.055f * Math.pow(c, 1.0f / 2.4f) - 0.055f);
     }
+
+    //ITU-R BT.709-6
+    //https://www.itu.int/dms_pubrec/itu-r/rec/bt/r-rec-bt.709-6-201506-i!!pdf-e.pdf
+    public static float rgbToLuminescence(float r, float g, float b) {
+        return 0.2126f * r + 0.7152f * g + 0.0722f * b;
+    }
 }
