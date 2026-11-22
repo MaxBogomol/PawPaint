@@ -66,7 +66,7 @@ public class PawPaint {
             for (int x = 0; x < size; x++) {
                 ColorUtil.setColor((float) x / size, (float) y / size, 0.0f, 1.0f, color1);
                 ColorUtil.setColor(0.0f, (float) x / size, (float) y / size, 0.5f, color2);
-                BlendModes.LINEAR.blend(color2, color1, color);
+                BlendModes.ADDITIVE.blend(color2, color1, color);
                 layer.setPixel(x, y, color, pixelData);
             }
         }

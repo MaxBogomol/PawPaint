@@ -2,7 +2,7 @@ package dev.maxbogomol.paw_paint.core.color.blend;
 
 import dev.maxbogomol.paw_paint.core.util.ColorUtil;
 
-public class PerceptualBlendMode extends BlendMode {
+public class NormalLegacyBlendMode extends BlendMode {
     @Override
     public void blend(float[] src, float[] dest, float[] out) {
         if (src[3] == 0) {
