@@ -3,6 +3,7 @@ package dev.maxbogomol.paw_paint;
 import dev.maxbogomol.paw_paint.core.color.ColorFormat;
 import dev.maxbogomol.paw_paint.core.color.ColorFormats;
 import dev.maxbogomol.paw_paint.core.canvas.layer.Layer;
+import dev.maxbogomol.paw_paint.core.color.blend.BlendModes;
 import dev.maxbogomol.paw_paint.core.util.ColorUtil;
 import org.freedesktop.cairo.Antialias;
 import org.freedesktop.cairo.Format;
@@ -56,12 +57,16 @@ public class PawPaint {
         ColorFormat colorFormat = ColorFormats.RGBA8;
         byte[] pixelData = colorFormat.createPixelData();
         float[] color = ColorFormat.createColor();
+        float[] color1 = ColorFormat.createColor();
+        float[] color2 = ColorFormat.createColor();
 
         Layer layer = new Layer(colorFormat, size, size, "test");
 
         for (int y = 0; y < size; y++) {
             for (int x = 0; x < size; x++) {
-                ColorUtil.setColor((float) x / size, (float) y / size, 0.0f, 1.0f, color);
+                ColorUtil.setColor((float) x / size, (float) y / size, 0.0f, 1.0f, color1);
+                ColorUtil.setColor(0.0f, (float) x / size, (float) y / size, 0.5f, color2);
+                BlendModes.LINEAR.blend(color2, color1, color);
                 layer.setPixel(x, y, color, pixelData);
             }
         }
