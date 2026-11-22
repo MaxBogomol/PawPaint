@@ -1,4 +1,4 @@
-package dev.maxbogomol.paw_paint.core.layer;
+package dev.maxbogomol.paw_paint.core.canvas.layer;
 
 import java.util.Arrays;
 import java.util.HashMap;

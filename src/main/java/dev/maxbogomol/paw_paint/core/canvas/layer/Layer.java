@@ -1,10 +1,10 @@
-package dev.maxbogomol.paw_paint.core.layer;
+package dev.maxbogomol.paw_paint.core.canvas.layer;
 
 import dev.maxbogomol.paw_paint.core.color.ColorFormat;
 import dev.maxbogomol.paw_paint.core.color.Colors;
 import dev.maxbogomol.paw_paint.core.util.ColorUtil;
 
-public class Layer {
+public class Layer extends LayerNode {
     private static final int TILE_SIZE = 64;
 
     private TileMap tileMap;
@@ -14,13 +14,13 @@ public class Layer {
     private int height = 0;
     private int x = 0;
     private int y = 0;
-    private float opacity = 1f;
 
-    public Layer(ColorFormat colorFormat, int width, int height) {
+    public Layer(ColorFormat colorFormat, int width, int height, String name) {
         this.colorFormat = colorFormat;
         this.tileMap =  createTileMap(colorFormat);
         this.width = width;
         this.height = height;
+        this.name = name;
     }
 
     public ColorFormat getColorFormat() {
