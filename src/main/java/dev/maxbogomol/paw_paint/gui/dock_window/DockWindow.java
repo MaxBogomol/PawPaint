@@ -558,8 +558,8 @@ public class DockWindow {
         tabButton.setHalign(Align.CENTER);
         tabButton.setValign(Align.CENTER);
 
-        tabButton.dockWindow = this;
-        tabButton.dockPanel = dockPanel;
+        tabButton.setDockWindow(this);
+        tabButton.setDockPanel(dockPanel);
 
         tabsBarBox.append(tabButton);
 
@@ -622,8 +622,8 @@ public class DockWindow {
     private boolean onTabDrop(Value value, double x, double y) {
         if (value != null) {
             if (value.getObject() instanceof DockTabButton tabButton) {
-                DockWindow dockWindow = tabButton.dockWindow;
-                IDockPanel dockPanel = tabButton.dockPanel;
+                DockWindow dockWindow = tabButton.getDockWindow();
+                IDockPanel dockPanel = tabButton.getDockPanel();
                 int width = tabsBarBox.getWidth();
                 int height = tabsBarBox.getHeight();
                 int size = getDockPanels().size();

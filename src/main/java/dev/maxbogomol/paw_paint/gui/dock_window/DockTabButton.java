@@ -10,8 +10,8 @@ import java.lang.foreign.MemorySegment;
 public class DockTabButton extends Button {
     public static Type gtype = Types.register(DockTabButton.class);
 
-    public DockWindow dockWindow;
-    public IDockPanel dockPanel;
+    private DockWindow dockWindow;
+    private IDockPanel dockPanel;
 
     public DockTabButton(MemorySegment address) {
         super(address);
@@ -19,6 +19,22 @@ public class DockTabButton extends Button {
 
     public DockTabButton() {
         super();
+    }
+
+    public void setDockWindow(DockWindow dockWindow) {
+        this.dockWindow = dockWindow;
+    }
+
+    public void setDockPanel(IDockPanel dockPanel) {
+        this.dockPanel = dockPanel;
+    }
+
+    public DockWindow getDockWindow() {
+        return dockWindow;
+    }
+
+    public IDockPanel getDockPanel() {
+        return dockPanel;
     }
 
     public static Type getType() {

@@ -3,8 +3,6 @@ package dev.maxbogomol.paw_paint;
 import dev.maxbogomol.paw_paint.core.color.ColorFormat;
 import dev.maxbogomol.paw_paint.core.color.ColorFormats;
 import dev.maxbogomol.paw_paint.core.layer.TileMap;
-import dev.maxbogomol.paw_paint.gui.dock_window.DockWindow;
-import dev.maxbogomol.paw_paint.gui.dock_window.dock_panel.SimpleDockPanel;
 import org.freedesktop.cairo.Antialias;
 import org.freedesktop.cairo.Format;
 import org.freedesktop.cairo.ImageSurface;
@@ -51,13 +49,6 @@ public class PawPaint {
 
         applicationWindow.setTitlebar(headerBar);
         applicationWindow.present();
-
-        DockWindow dockWindow1 = new DockWindow(applicationWindow, false);
-
-        dockWindow1.addDockPanel(new SimpleDockPanel("test1", "weather-clear-symbolic"));
-        dockWindow1.addDockPanel(new SimpleDockPanel("test2", "document-new-symbolic"));
-        dockWindow1.addDockPanel(new SimpleDockPanel("test3", "edit-delete-symbolic"));
-        dockWindow1.addDockPanel(new SimpleDockPanel("test4", "format-justify-fill-symbolic"));
 
         int size = 256;
 
@@ -115,8 +106,6 @@ public class PawPaint {
         });
 
         applicationWindow.setChild(drawingArea);
-
-        //applicationWindow.setChild(dockWindow1.getMainWidgetBox());
     }
 
     private void loadCssStyle() {
