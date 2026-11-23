@@ -13,13 +13,4 @@ public abstract class ColorSpace {
     public void decode(Color color) {
         decode(color, color);
     }
-
-    public abstract float encodeRed(float value);
-    public abstract float encodeGreen(float value);
-    public abstract float encodeBlue(float value);
-    public abstract float encodeAlpha(float value);
-    public abstract float decodeRed(float value);
-    public abstract float decodeGreen(float value);
-    public abstract float decodeBlue(float value);
-    public abstract float decodeAlpha(float value);
 }

@@ -61,13 +61,16 @@ public class PawPaint {
         Color color1 = Color.create();
         Color color2 = Color.create();
 
+        Color color1Space = Color.create();
+        Color color2Space = Color.create();
+
         Layer layer = new Layer(colorFormat, size, size, "test");
 
         for (int y = 0; y < size; y++) {
             for (int x = 0; x < size; x++) {
                 color1.set((float) x / size, (float) y / size, 0.0f, 1.0f);
                 color2.set(0.0f, (float) x / size, (float) y / size, 0.5f);
-                BlendModes.ADDITIVE.blend(color2, color1, color, ColorSpaces.LinearRGB);
+                BlendModes.ADDITIVE.blend(color2, color1, color1Space, color2Space, color, ColorSpaces.OKLAB);
                 layer.setPixel(x, y, color, pixelData);
             }
         }

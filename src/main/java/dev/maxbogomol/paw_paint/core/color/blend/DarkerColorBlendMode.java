@@ -6,7 +6,7 @@ import dev.maxbogomol.paw_paint.core.util.ColorUtil;
 
 public class DarkerColorBlendMode extends BlendMode {
     @Override
-    public void blend(Color src, Color dest, Color out, ColorSpace colorSpace) {
+    public void blend(Color src, Color dest, Color srcSpace, Color destSpace, Color out, ColorSpace colorSpace) {
         float ao = src.a + (1.0f - src.a) * dest.a;
         out.a = ao;
 
@@ -17,25 +17,21 @@ public class DarkerColorBlendMode extends BlendMode {
             float asFactor = (1.0f - dest.a) * src.a;
             float adFactor = (1.0f - src.a) * dest.a;
 
-            float rs = colorSpace.encodeRed(src.r);
-            float gs = colorSpace.encodeGreen(src.g);
-            float bs = colorSpace.encodeBlue(src.b);
+            colorSpace.encode(src, srcSpace);
+            colorSpace.encode(dest, destSpace);
 
-            float rd = colorSpace.encodeRed(dest.r);
-            float gd = colorSpace.encodeGreen(dest.g);
-            float bd = colorSpace.encodeBlue(dest.b);
-
-            float sLuminescence = ColorUtil.rgbToLuminescence(rs, gs, bs);
-            float dLuminescence = ColorUtil.rgbToLuminescence(rd, gd, bd);
+            float sLuminescence = ColorUtil.rgbToLuminescence(srcSpace.r, srcSpace.g, srcSpace.b);
+            float dLuminescence = ColorUtil.rgbToLuminescence(destSpace.r, destSpace.g, destSpace.b);
 
             boolean darker = sLuminescence < dLuminescence;
-            float r = darker ? rs : rd;
-            float g = darker ? gs : gd;
-            float b = darker ? bs : bd;
+            float r = darker ? srcSpace.r : destSpace.r;
+            float g = darker ? srcSpace.g : destSpace.g;
+            float b = darker ? srcSpace.b : destSpace.b;
 
-            out.r = colorSpace.decodeRed(rs * asFactor + rd * adFactor + src.a * dest.a * r * blendFactor);
-            out.g = colorSpace.decodeGreen(gs * asFactor + gd * adFactor + src.a * dest.a * g * blendFactor);
-            out.b = colorSpace.decodeBlue(bs * asFactor + bd * adFactor + src.a * dest.a * b * blendFactor);
+            out.r = srcSpace.r * asFactor + destSpace.r * adFactor + src.a * dest.a * r * blendFactor;
+            out.g = srcSpace.g * asFactor + destSpace.g * adFactor + src.a * dest.a * g * blendFactor;
+            out.b = srcSpace.b * asFactor + destSpace.b * adFactor + src.a * dest.a * b * blendFactor;
+            colorSpace.decode(out);
         }
     }
 }
