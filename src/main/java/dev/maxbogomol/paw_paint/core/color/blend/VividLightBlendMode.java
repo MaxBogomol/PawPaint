@@ -7,7 +7,7 @@ public class VividLightBlendMode extends SimpleBlendMode {
     public float blendChannel(float s, float d, float as, float ad, float blendFactor, ColorSpace colorSpace) {
         float asFactor = (1.0f - ad) * as;
         float adFactor = (1.0f - as) * ad;
-        float blend; //????
+        float blend;
         if (s < 0.5f) {
             blend = s <= 0.0f ? 0.0f : Math.max(0.0f, 1.0f - ((1.0f - d) / (2.0f * s)));
         } else {
