@@ -1,4 +1,6 @@
-package dev.maxbogomol.paw_paint.core.color;
+package dev.maxbogomol.paw_paint.core.color.format;
+
+import dev.maxbogomol.paw_paint.core.color.Color;
 
 public class IndexColorFormat extends ColorFormat {
     @Override
@@ -17,18 +19,15 @@ public class IndexColorFormat extends ColorFormat {
     }
 
     @Override
-    public void encode(float r, float g, float b, float a, byte[] pixelData) {
+    public void encode(Color in, byte[] pixelData) {
         float channelValue = getChannelValue();
-        pixelData[0] = (byte) Math.round(r * channelValue);
+        pixelData[0] = (byte) Math.round(in.r * channelValue);
     }
 
     @Override
-    public void decode(float[] out, byte[] pixelData) {
+    public void decode(Color out, byte[] pixelData) {
         float invertedChannelValue = 1.0f / getChannelValue();
         float index = (pixelData[0] & 0xFF) * invertedChannelValue;
-        out[0] = index;
-        out[1] = index;
-        out[2] = index;
-        out[3] = index;
+        out.r = out.g = out.b = out.a = index;
     }
 }

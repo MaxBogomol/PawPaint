@@ -1,24 +1,10 @@
 package dev.maxbogomol.paw_paint.core.color.blend;
 
-import dev.maxbogomol.paw_paint.core.util.ColorUtil;
-
-public class NormalBlendMode extends BlendMode {
+public class NormalBlendMode extends SimpleBlendMode {
     @Override
-    public void blend(float[] src, float[] dest, float[] out) {
-        float ao = src[3] + (1.0f - src[3]) * dest[3];
-        out[3] = ao;
-
-        if (ao == 0) {
-            out[0] = out[1] = out[2] = 0;
-        } else {
-            float blendFactor = 1.0f / ao;
-            float adFactor = (1.0f - src[3]) * dest[3];
-            for (int i = 0; i < 3; i++) {
-                float sLinear = ColorUtil.srgbToLinear(src[i]);
-                float dLinear = ColorUtil.srgbToLinear(dest[i]);
-                float oLinear = (sLinear * src[3] + dLinear * adFactor) * blendFactor;
-                out[i] = ColorUtil.linearToSrgb(oLinear);
-            }
-        }
+    public float blendChannel(float s, float d, float as, float ad, float blendFactor) {
+        float adFactor = (1.0f - as) * ad;
+        float o = s * as + d * adFactor * blendFactor;
+        return Math.min(1.0f, o);
     }
 }

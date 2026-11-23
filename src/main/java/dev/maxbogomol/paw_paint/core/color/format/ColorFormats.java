@@ -1,4 +1,4 @@
-package dev.maxbogomol.paw_paint.core.color;
+package dev.maxbogomol.paw_paint.core.color.format;
 
 public class ColorFormats {
     public static ColorFormat RGBA5 = new RGBA5ColorFormat();

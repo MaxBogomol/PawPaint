@@ -1,10 +1,10 @@
 package dev.maxbogomol.paw_paint;
 
-import dev.maxbogomol.paw_paint.core.color.ColorFormat;
-import dev.maxbogomol.paw_paint.core.color.ColorFormats;
 import dev.maxbogomol.paw_paint.core.canvas.layer.Layer;
+import dev.maxbogomol.paw_paint.core.color.Color;
 import dev.maxbogomol.paw_paint.core.color.blend.BlendModes;
-import dev.maxbogomol.paw_paint.core.util.ColorUtil;
+import dev.maxbogomol.paw_paint.core.color.format.ColorFormat;
+import dev.maxbogomol.paw_paint.core.color.format.ColorFormats;
 import org.freedesktop.cairo.Antialias;
 import org.freedesktop.cairo.Format;
 import org.freedesktop.cairo.ImageSurface;
@@ -56,16 +56,16 @@ public class PawPaint {
 
         ColorFormat colorFormat = ColorFormats.RGBA8;
         byte[] pixelData = colorFormat.createPixelData();
-        float[] color = ColorFormat.createColor();
-        float[] color1 = ColorFormat.createColor();
-        float[] color2 = ColorFormat.createColor();
+        Color color = Color.create();
+        Color color1 = Color.create();
+        Color color2 = Color.create();
 
         Layer layer = new Layer(colorFormat, size, size, "test");
 
         for (int y = 0; y < size; y++) {
             for (int x = 0; x < size; x++) {
-                ColorUtil.setColor((float) x / size, (float) y / size, 0.0f, 1.0f, color1);
-                ColorUtil.setColor(0.0f, (float) x / size, (float) y / size, 0.5f, color2);
+                color1.set((float) x / size, (float) y / size, 0.0f, 1.0f);
+                color2.set(0.0f, (float) x / size, (float) y / size, 0.5f);
                 BlendModes.ADDITIVE.blend(color2, color1, color);
                 layer.setPixel(x, y, color, pixelData);
             }
@@ -82,10 +82,10 @@ public class PawPaint {
             for (int x = 0; x < size; x++) {
                 layer.getPixel(x, y, color, pixelData);
 
-                float red = ColorFormat.getRed(color);
-                float green = ColorFormat.getGreen(color);
-                float blue = ColorFormat.getBlue(color);
-                float alpha = ColorFormat.getAlpha(color);
+                float red = color.r;
+                float green = color.g;
+                float blue = color.b;
+                float alpha = color.a;
 
                 if (intSurface) {
                     int argb = 0;

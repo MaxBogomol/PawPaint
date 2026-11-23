@@ -1,27 +1,28 @@
 package dev.maxbogomol.paw_paint.core.color.blend;
 
+import dev.maxbogomol.paw_paint.core.color.Color;
 import dev.maxbogomol.paw_paint.core.util.ColorUtil;
 
 public class DarkerColorBlendMode extends BlendMode {
     @Override
-    public void blend(float[] src, float[] dest, float[] out) {
-        float ao = src[3] + (1.0f - src[3]) * dest[3];
-        out[3] = ao;
+    public void blend(Color src, Color dest, Color out) {
+        float ao = src.a + (1.0f - src.a) * dest.a;
+        out.a = ao;
 
         if (ao == 0) {
-            out[0] = out[1] = out[2] = 0;
+            out.r = out.g = out.b = 0;
         } else {
             float blendFactor = 1.0f / ao;
-            float asFactor = (1.0f - dest[3]) * src[3];
-            float adFactor = (1.0f - src[3]) * dest[3];
+            float asFactor = (1.0f - dest.a) * src.a;
+            float adFactor = (1.0f - src.a) * dest.a;
 
-            float rs = ColorUtil.srgbToLinear(src[0]);
-            float gs = ColorUtil.srgbToLinear(src[1]);
-            float bs = ColorUtil.srgbToLinear(src[2]);
+            float rs = ColorUtil.srgbToLinear(src.r);
+            float gs = ColorUtil.srgbToLinear(src.g);
+            float bs = ColorUtil.srgbToLinear(src.b);
 
-            float rd = ColorUtil.srgbToLinear(dest[0]);
-            float gd = ColorUtil.srgbToLinear(dest[1]);
-            float bd = ColorUtil.srgbToLinear(dest[2]);
+            float rd = ColorUtil.srgbToLinear(dest.r);
+            float gd = ColorUtil.srgbToLinear(dest.g);
+            float bd = ColorUtil.srgbToLinear(dest.b);
 
             float sLuminescence = ColorUtil.rgbToLuminescence(rs, gs, bs);
             float dLuminescence = ColorUtil.rgbToLuminescence(rd, gd, bd);
@@ -31,9 +32,9 @@ public class DarkerColorBlendMode extends BlendMode {
             float g = darker ? gs : gd;
             float b = darker ? bs : bd;
 
-            out[0] = ColorUtil.linearToSrgb(rs * asFactor + rd * adFactor + src[3] * dest[3] * r * blendFactor);
-            out[1] = ColorUtil.linearToSrgb(gs * asFactor + gd * adFactor + src[3] * dest[3] * g * blendFactor);
-            out[2] = ColorUtil.linearToSrgb(bs * asFactor + bd * adFactor + src[3] * dest[3] * b * blendFactor);
+            out.r = ColorUtil.linearToSrgb(rs * asFactor + rd * adFactor + src.a * dest.a * r * blendFactor);
+            out.g = ColorUtil.linearToSrgb(gs * asFactor + gd * adFactor + src.a * dest.a * g * blendFactor);
+            out.b = ColorUtil.linearToSrgb(bs * asFactor + bd * adFactor + src.a * dest.a * b * blendFactor);
         }
     }
 }

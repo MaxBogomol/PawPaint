@@ -1,4 +1,6 @@
-package dev.maxbogomol.paw_paint.core.color;
+package dev.maxbogomol.paw_paint.core.color.format;
+
+import dev.maxbogomol.paw_paint.core.color.Color;
 
 public class Gray8ColorFormat extends ColorFormat {
     @Override
@@ -17,19 +19,17 @@ public class Gray8ColorFormat extends ColorFormat {
     }
 
     @Override
-    public void encode(float r, float g, float b, float a, byte[] pixelData) {
+    public void encode(Color in, byte[] pixelData) {
         float channelValue = getChannelValue();
-        pixelData[0] = (byte) Math.round(r * channelValue);
-        pixelData[1] = (byte) Math.round(a * channelValue);
+        pixelData[0] = (byte) Math.round(in.r * channelValue);
+        pixelData[1] = (byte) Math.round(in.a * channelValue);
     }
 
     @Override
-    public void decode(float[] out, byte[] pixelData) {
+    public void decode(Color out, byte[] pixelData) {
         float invertedChannelValue = 1.0f / getChannelValue();
         float gray = (pixelData[0] & 0xFF) * invertedChannelValue;
-        out[0] = gray;
-        out[1] = gray;
-        out[2] = gray;
-        out[3] = (pixelData[1] & 0xFF) * invertedChannelValue;
+        out.r = out.g = out.b = gray;
+        out.a = (pixelData[1] & 0xFF) * invertedChannelValue;
     }
 }
