@@ -16,6 +16,7 @@ public abstract class SimpleBlendMode extends BlendMode {
             float blendFactor = 1.0f / ao;
             colorSpace.encode(src, srcSpace);
             colorSpace.encode(dest, destSpace);
+            composeMode.apply(srcSpace, destSpace);
             out.r = blendChannel(srcSpace.r, destSpace.r, src.a, dest.a, blendFactor);
             out.g = blendChannel(srcSpace.g, destSpace.g, src.a, dest.a, blendFactor);
             out.b = blendChannel(srcSpace.b, destSpace.b, src.a, dest.a, blendFactor);

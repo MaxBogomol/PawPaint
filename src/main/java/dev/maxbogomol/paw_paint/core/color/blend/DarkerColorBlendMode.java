@@ -20,6 +20,7 @@ public class DarkerColorBlendMode extends BlendMode {
 
             colorSpace.encode(src, srcSpace);
             colorSpace.encode(dest, destSpace);
+            composeMode.apply(srcSpace, destSpace);
 
             float sLuminescence = ColorUtil.rgbToLuminescence(srcSpace.r, srcSpace.g, srcSpace.b);
             float dLuminescence = ColorUtil.rgbToLuminescence(destSpace.r, destSpace.g, destSpace.b);

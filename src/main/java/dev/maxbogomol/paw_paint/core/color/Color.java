@@ -20,6 +20,19 @@ public class Color {
         return new Color(r, g, b, a);
     }
 
+    public static void copy(Color src, Color dest) {
+        src.copy(dest);
+    }
+
+    public static void swap(Color src, Color dest) {
+        float r = dest.r;
+        float g = dest.g;
+        float b = dest.b;
+        float a = dest.a;
+        src.copy(dest);
+        src.set(r, g, b, a);
+    }
+
     public Color copy() {
         return create(r, g, b, a);
     }
