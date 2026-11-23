@@ -1,12 +1,13 @@
 package dev.maxbogomol.paw_paint.core.color.blend;
 
 import dev.maxbogomol.paw_paint.core.color.Color;
+import dev.maxbogomol.paw_paint.core.color.compose.ComposeMode;
 import dev.maxbogomol.paw_paint.core.color.space.ColorSpace;
 
 public abstract class SimpleBlendMode extends BlendMode {
     @Override
-    public void blend(Color src, Color dest, Color srcSpace, Color destSpace, Color out, ColorSpace colorSpace) {
-        float ao = src.a + (1.0f - src.a) * dest.a;
+    public void blend(Color src, Color dest, Color srcSpace, Color destSpace, Color out, ComposeMode composeMode, ColorSpace colorSpace) {
+        float ao = composeMode.blend(src.a, dest.a);
         out.a = ao;
 
         if (ao == 0) {

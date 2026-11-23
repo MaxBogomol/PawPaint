@@ -3,6 +3,7 @@ package dev.maxbogomol.paw_paint;
 import dev.maxbogomol.paw_paint.core.canvas.layer.Layer;
 import dev.maxbogomol.paw_paint.core.color.Color;
 import dev.maxbogomol.paw_paint.core.color.blend.BlendModes;
+import dev.maxbogomol.paw_paint.core.color.compose.ComposeModes;
 import dev.maxbogomol.paw_paint.core.color.format.ColorFormat;
 import dev.maxbogomol.paw_paint.core.color.format.ColorFormats;
 import dev.maxbogomol.paw_paint.core.color.space.ColorSpaces;
@@ -70,7 +71,7 @@ public class PawPaint {
             for (int x = 0; x < size; x++) {
                 color1.set((float) x / size, (float) y / size, 0.0f, 1.0f);
                 color2.set(0.0f, (float) x / size, (float) y / size, 0.5f);
-                BlendModes.ADDITIVE.blend(color2, color1, color1Space, color2Space, color, ColorSpaces.OKLAB);
+                BlendModes.ADDITIVE.blend(color2, color1, color1Space, color2Space, color, ComposeModes.SRC_OVER, ColorSpaces.LINEAR_RGB);
                 layer.setPixel(x, y, color, pixelData);
             }
         }
