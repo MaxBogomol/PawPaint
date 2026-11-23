@@ -17,12 +17,12 @@ public abstract class SimpleBlendMode extends BlendMode {
             colorSpace.encode(src, srcSpace);
             colorSpace.encode(dest, destSpace);
             composeMode.apply(srcSpace, destSpace);
-            out.r = blendChannel(srcSpace.r, destSpace.r, src.a, dest.a, blendFactor);
-            out.g = blendChannel(srcSpace.g, destSpace.g, src.a, dest.a, blendFactor);
-            out.b = blendChannel(srcSpace.b, destSpace.b, src.a, dest.a, blendFactor);
+            out.r = blendChannel(srcSpace.r, destSpace.r, srcSpace.a, destSpace.a, blendFactor, colorSpace);
+            out.g = blendChannel(srcSpace.g, destSpace.g, srcSpace.a, destSpace.a, blendFactor, colorSpace);
+            out.b = blendChannel(srcSpace.b, destSpace.b, srcSpace.a, destSpace.a, blendFactor, colorSpace);
             colorSpace.decode(out);
         }
     }
 
-    public abstract float blendChannel(float s, float d, float as, float ad, float blendFactor);
+    public abstract float blendChannel(float s, float d, float as, float ad, float blendFactor, ColorSpace colorSpace);
 }

@@ -15,12 +15,13 @@ public class DarkerColorBlendMode extends BlendMode {
             out.r = out.g = out.b = 0;
         } else {
             float blendFactor = 1.0f / ao;
-            float asFactor = (1.0f - dest.a) * src.a;
-            float adFactor = (1.0f - src.a) * dest.a;
 
             colorSpace.encode(src, srcSpace);
             colorSpace.encode(dest, destSpace);
             composeMode.apply(srcSpace, destSpace);
+
+            float asFactor = (1.0f - destSpace.a) * srcSpace.a;
+            float adFactor = (1.0f - srcSpace.a) * destSpace.a;
 
             float sLuminescence = ColorUtil.rgbToLuminescence(srcSpace.r, srcSpace.g, srcSpace.b);
             float dLuminescence = ColorUtil.rgbToLuminescence(destSpace.r, destSpace.g, destSpace.b);
@@ -30,9 +31,9 @@ public class DarkerColorBlendMode extends BlendMode {
             float g = darker ? srcSpace.g : destSpace.g;
             float b = darker ? srcSpace.b : destSpace.b;
 
-            out.r = srcSpace.r * asFactor + destSpace.r * adFactor + src.a * dest.a * r * blendFactor;
-            out.g = srcSpace.g * asFactor + destSpace.g * adFactor + src.a * dest.a * g * blendFactor;
-            out.b = srcSpace.b * asFactor + destSpace.b * adFactor + src.a * dest.a * b * blendFactor;
+            out.r = srcSpace.r * asFactor + destSpace.r * adFactor + srcSpace.a * destSpace.a * r * blendFactor;
+            out.g = srcSpace.g * asFactor + destSpace.g * adFactor + srcSpace.a * destSpace.a * g * blendFactor;
+            out.b = srcSpace.b * asFactor + destSpace.b * adFactor + srcSpace.a * destSpace.a * b * blendFactor;
             colorSpace.decode(out);
         }
     }

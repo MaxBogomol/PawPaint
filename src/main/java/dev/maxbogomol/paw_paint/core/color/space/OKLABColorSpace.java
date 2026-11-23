@@ -12,5 +12,21 @@ public class OKLABColorSpace extends ColorSpace {
     @Override
     public void decode(Color in, Color out) {
         ColorUtil.oklabToSrgb(in).copy(out);
+        clampOut(out);
+    }
+
+    @Override
+    public float min(float value) {
+        return value;
+    }
+
+    @Override
+    public float max(float value) {
+        return value;
+    }
+
+    @Override
+    public float clamp(float value) {
+        return value;
     }
 }

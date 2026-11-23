@@ -1,10 +1,11 @@
 package dev.maxbogomol.paw_paint.core.color.blend;
 
+import dev.maxbogomol.paw_paint.core.color.space.ColorSpace;
+
 public class NormalBlendMode extends SimpleBlendMode {
     @Override
-    public float blendChannel(float s, float d, float as, float ad, float blendFactor) {
+    public float blendChannel(float s, float d, float as, float ad, float blendFactor, ColorSpace colorSpace) {
         float adFactor = (1.0f - as) * ad;
-        float o = (s * as + d * adFactor) * blendFactor;
-        return Math.min(1.0f, o);
+        return s * as + d * adFactor * blendFactor;
     }
 }

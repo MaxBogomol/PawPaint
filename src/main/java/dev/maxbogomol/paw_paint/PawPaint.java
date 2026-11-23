@@ -71,7 +71,7 @@ public class PawPaint {
             for (int x = 0; x < size; x++) {
                 color1.set((float) x / size, (float) y / size, 0.0f, 1.0f);
                 color2.set(0.0f, (float) x / size, (float) y / size, 0.5f);
-                BlendModes.ADDITIVE.blend(color2, color1, color1Space, color2Space, color, ComposeModes.SRC_OVER, ColorSpaces.LINEAR_RGB);
+                BlendModes.NORMAL.blend(color2, color1, color1Space, color2Space, color, ComposeModes.SRC_OVER, ColorSpaces.OKLAB);
                 layer.setPixel(x, y, color, pixelData);
             }
         }
