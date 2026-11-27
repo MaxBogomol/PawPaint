@@ -16,6 +16,7 @@ import java.util.Set;
 public class CanvasArea {
     private static final double MIN_ZOOM = 0.01f;
     private static final double MAX_ZOOM = 256.0f;
+    private static final double ROTATION_ANGLE_LOCK = Math.toRadians(15.0f);
     private static final double MOUSE_SCROLL_ANGLE_STEP = Math.toRadians(5.0f);
 
     private final Canvas canvas;
@@ -179,6 +180,12 @@ public class CanvasArea {
 
                 double currentAngle = Math.atan2(currentY - centerY, currentX - centerX);
                 double newRotation = drawingAreaDragRotation + (currentAngle - drawingAreaDragStartAngle);
+
+                Set<ModifierType> modifiers = gestureDrag.getCurrentEventState();
+                if (modifiers.contains(ModifierType.CONTROL_MASK)) {
+                    newRotation = Math.round(newRotation / ROTATION_ANGLE_LOCK) * ROTATION_ANGLE_LOCK;
+                }
+
                 double deltaAngle = newRotation - drawingAreaDragRotation;
 
                 double canvasCenterX = centerX + drawingAreaDragOffsetX;
@@ -210,14 +217,15 @@ public class CanvasArea {
     }
 
     private boolean onDrawingAreaScroll(EventControllerScroll scrollController, double dx, double dy) {
-        Set<ModifierType> modifiers = scrollController.getCurrentEventState();
-
-        double centerX = drawingArea.getWidth() / 2.0f;
-        double centerY = drawingArea.getHeight() / 2.0f;
-
         if (!drawingAreaDragRotating) {
+            Set<ModifierType> modifiers = scrollController.getCurrentEventState();
+
+            double centerX = drawingArea.getWidth() / 2.0f;
+            double centerY = drawingArea.getHeight() / 2.0f;
+
             if (modifiers.contains(ModifierType.SHIFT_MASK)) {
-                double deltaAngle = MOUSE_SCROLL_ANGLE_STEP * dy;
+                boolean lock = modifiers.contains(ModifierType.CONTROL_MASK);
+                double deltaAngle = (lock ? ROTATION_ANGLE_LOCK : MOUSE_SCROLL_ANGLE_STEP) * dy;
 
                 double relativeX = drawingAreaMouseX - (centerX + canvasOffsetX);
                 double relativeY = drawingAreaMouseY - (centerY + canvasOffsetY);
@@ -226,6 +234,8 @@ public class CanvasArea {
                 canvasOffsetY += relativeY - (relativeX * Math.sin(deltaAngle) + relativeY * Math.cos(deltaAngle));
 
                 canvasRotation += deltaAngle;
+                if (lock) canvasRotation = Math.round(canvasRotation / ROTATION_ANGLE_LOCK) * ROTATION_ANGLE_LOCK;
+
                 drawingArea.queueDraw();
             } else {
                 double zoomFactor = Math.pow(1.1, -dy);
@@ -241,6 +251,7 @@ public class CanvasArea {
                     canvasOffsetY -= relativeY * (scaleRatio - 1.0f);
 
                     canvasZoom = newZoom;
+                    
                     drawingArea.queueDraw();
                 }
             }
