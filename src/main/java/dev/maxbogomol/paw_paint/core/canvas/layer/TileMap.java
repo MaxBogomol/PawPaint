@@ -6,11 +6,9 @@ import java.util.Map;
 
 public class TileMap {
     private final Map<Long, Tile> tiles = new HashMap<>();
-    private final int tileSize;
     private final int bytesPerPixel;
 
-    public TileMap(int tileSize, int bytesPerPixel) {
-        this.tileSize = tileSize;
+    public TileMap(int bytesPerPixel) {
         this.bytesPerPixel = bytesPerPixel;
     }
 
@@ -19,20 +17,20 @@ public class TileMap {
     }
 
     public void setPixel(int x, int y, byte[] pixelData) {
-        int tileX = Math.floorDiv(x, tileSize);
-        int tileY = Math.floorDiv(y, tileSize);
-        int localX = Math.floorMod(x, tileSize);
-        int localY = Math.floorMod(y, tileSize);
+        int tileX = Math.floorDiv(x, Tile.TILE_SIZE);
+        int tileY = Math.floorDiv(y, Tile.TILE_SIZE);
+        int localX = Math.floorMod(x, Tile.TILE_SIZE);
+        int localY = Math.floorMod(y, Tile.TILE_SIZE);
         long key = getTileKey(tileX, tileY);
-        Tile tile = tiles.computeIfAbsent(key, k -> new Tile(tileSize, bytesPerPixel));
+        Tile tile = tiles.computeIfAbsent(key, k -> new Tile(bytesPerPixel));
         tile.setPixel(localX, localY, pixelData);
     }
 
     public void getPixel(int x, int y, byte[] pixelData) {
-        int tileX = Math.floorDiv(x, tileSize);
-        int tileY = Math.floorDiv(y, tileSize);
-        int localX = Math.floorMod(x, tileSize);
-        int localY = Math.floorMod(y, tileSize);
+        int tileX = Math.floorDiv(x, Tile.TILE_SIZE);
+        int tileY = Math.floorDiv(y, Tile.TILE_SIZE);
+        int localX = Math.floorMod(x, Tile.TILE_SIZE);
+        int localY = Math.floorMod(y, Tile.TILE_SIZE);
         long key = getTileKey(tileX, tileY);
         Tile tile = tiles.get(key);
         if (tile == null) {
@@ -60,9 +58,5 @@ public class TileMap {
                 if (tileY > bounds.maxY) bounds.maxY = tileY;
             }
         }
-    }
-
-    public int getTileSize() {
-        return tileSize;
     }
 }

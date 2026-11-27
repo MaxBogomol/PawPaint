@@ -24,7 +24,7 @@ public class LayerGroup extends LayerNode {
 
     public void blend() {
         for (LayerNode layerNode : layerNodes) {
-            layerNode.blend(this);
+            if (layerNode.getVisible()) layerNode.blend(this);
         }
     }
 }

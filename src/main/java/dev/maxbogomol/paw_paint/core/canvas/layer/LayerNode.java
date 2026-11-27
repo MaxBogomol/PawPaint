@@ -10,8 +10,6 @@ import dev.maxbogomol.paw_paint.core.color.space.ColorSpace;
 import dev.maxbogomol.paw_paint.core.color.space.ColorSpaces;
 
 public abstract class LayerNode {
-    protected static final int TILE_SIZE = 64;
-
     protected byte[] pixelData;
     protected Color color = Color.create();
     protected Color colorSrc = Color.create();
@@ -95,7 +93,7 @@ public abstract class LayerNode {
     }
 
     private TileMap createTileMap(ColorFormat colorFormat) {
-        return new TileMap(Layer.TILE_SIZE, colorFormat.getBytesPerPixel());
+        return new TileMap(colorFormat.getBytesPerPixel());
     }
 
     public void setPixel(int x, int y, Color color, byte[] pixelData) {
@@ -114,11 +112,10 @@ public abstract class LayerNode {
         getTileMap().checkBounds(boundsSrc);
         node.getTileMap().checkBounds(boundsDest);
         boundsSrc.bound(boundsDest);
-        int tileSize = tileMap.getTileSize();
-        int minX = boundsSrc.minX * tileSize + offsetX;
-        int minY = boundsSrc.minY * tileSize + offsetY;
-        int maxX = (boundsSrc.maxX + 1) * tileSize + offsetX;
-        int maxY = (boundsSrc.maxY + 1) * tileSize + offsetY;
+        int minX = boundsSrc.minX * Tile.TILE_SIZE + offsetX;
+        int minY = boundsSrc.minY * Tile.TILE_SIZE + offsetY;
+        int maxX = (boundsSrc.maxX + 1) * Tile.TILE_SIZE + offsetX;
+        int maxY = (boundsSrc.maxY + 1) * Tile.TILE_SIZE + offsetY;
 
         for (int y = minY; y < maxY; y++) {
             for (int x = minX; x < maxX; x++) {
