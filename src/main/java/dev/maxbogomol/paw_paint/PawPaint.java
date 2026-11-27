@@ -1,23 +1,19 @@
 package dev.maxbogomol.paw_paint;
 
+import dev.maxbogomol.paw_paint.core.canvas.Canvas;
 import dev.maxbogomol.paw_paint.core.canvas.layer.Layer;
 import dev.maxbogomol.paw_paint.core.color.Color;
 import dev.maxbogomol.paw_paint.core.color.blend.BlendModes;
 import dev.maxbogomol.paw_paint.core.color.compose.ComposeModes;
 import dev.maxbogomol.paw_paint.core.color.format.ColorFormat;
 import dev.maxbogomol.paw_paint.core.color.format.ColorFormats;
-import dev.maxbogomol.paw_paint.core.color.space.ColorSpaces;
-import org.freedesktop.cairo.Antialias;
-import org.freedesktop.cairo.Format;
-import org.freedesktop.cairo.ImageSurface;
+import dev.maxbogomol.paw_paint.gui.canvas.CanvasArea;
 import org.gnome.gdk.Display;
 import org.gnome.gio.ApplicationFlags;
 import org.gnome.gtk.*;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.foreign.MemorySegment;
-import java.lang.foreign.ValueLayout;
 import java.util.Objects;
 
 public class PawPaint {
@@ -55,84 +51,51 @@ public class PawPaint {
         applicationWindow.present();
 
         int size = 256;
+        int layerSize = size;
 
         ColorFormat colorFormat = ColorFormats.RGBA8;
         byte[] pixelData = colorFormat.createPixelData();
-        Color color = Color.create();
         Color color1 = Color.create();
         Color color2 = Color.create();
 
-        Color color1Space = Color.create();
-        Color color2Space = Color.create();
+        Canvas canvas = new Canvas(colorFormat, size, size);
 
-        Layer layer = new Layer(colorFormat, size, size, "test");
+        Layer layer1 = new Layer(colorFormat, layerSize, layerSize, "test");
+        Layer layer2 = new Layer(colorFormat, layerSize, layerSize, "test");
 
-        for (int y = 0; y < size; y++) {
-            for (int x = 0; x < size; x++) {
-                color1.set((float) x / size, (float) y / size, 0.0f, 1.0f);
-                color2.set(0.0f, (float) x / size, (float) y / size, 0.5f);
-                BlendModes.NORMAL.blend(color2, color1, color1Space, color2Space, color, ComposeModes.SRC_OVER, ColorSpaces.OKLAB);
-                layer.setPixel(x, y, color, pixelData);
+        canvas.getMainLayerGroup().addNode(layer1);
+        canvas.getMainLayerGroup().addNode(layer2);
+
+        layer1.setX(-size / 4);
+        layer1.setY(-size / 4);
+
+        layer2.setBlendMode(BlendModes.NORMAL);
+        layer2.setComposeMode(ComposeModes.SRC_OVER);
+        layer2.setX(size / 4);
+        layer2.setY(size / 4);
+
+        for (int y = 0; y < layerSize; y++) {
+            for (int x = 0; x < layerSize; x++) {
+                color1.set((float) x / layerSize, (float) y / layerSize, 0.0f, 1.0f);
+                color1.set(1.0f, 1.0f, 0.0f, 0.5f);
+                layer1.setTileMapPixel(x, y, color1, pixelData);
             }
         }
 
-        boolean intSurface = colorFormat.getBitDepth() <= 8;
-
-        ImageSurface surface = ImageSurface.create(intSurface ? Format.ARGB32 : Format.RGBA128F, size, size);
-        MemorySegment data = surface.getData();
-        int stride = surface.getStride();
-        int channelValue = 255;
-
-        for (int y = 0; y < size; y++) {
-            for (int x = 0; x < size; x++) {
-                layer.getPixel(x, y, color, pixelData);
-
-                float red = color.r;
-                float green = color.g;
-                float blue = color.b;
-                float alpha = color.a;
-
-                if (intSurface) {
-                    int argb = 0;
-
-                    if (alpha > 0) {
-                        float mult = alpha * channelValue;
-                        int r = (int) (red * mult);
-                        int g = (int) (green * mult);
-                        int b = (int) (blue * mult);
-                        int a = (int) (mult);
-
-                        argb = (a << 24) | (r << 16) | (g << 8) | b;
-                    }
-
-                    long pixelOffset = (long) y * stride + x * 4L;
-                    data.set(ValueLayout.JAVA_INT, pixelOffset, argb);
-                } else {
-                    if (alpha == 0) red = green = blue = alpha = 0;
-
-                    long pixelOffset = (long) y * stride + x * 16L;
-                    data.set(ValueLayout.JAVA_FLOAT, pixelOffset, red);
-                    data.set(ValueLayout.JAVA_FLOAT, pixelOffset + 4, green);
-                    data.set(ValueLayout.JAVA_FLOAT, pixelOffset + 8, blue);
-                    data.set(ValueLayout.JAVA_FLOAT, pixelOffset + 12, alpha);
-                }
+        for (int y = 0; y < layerSize; y++) {
+            for (int x = 0; x < layerSize; x++) {
+                color2.set(0.0f, (float) x / layerSize, (float) y / layerSize, 1.0f);
+                color2.set(0.0f, 0.0f, 1.0f, 0.5f);
+                layer2.setTileMapPixel(x, y, color2, pixelData);
             }
         }
-        surface.markDirty();
 
-        DrawingArea drawingArea = new DrawingArea();
-        drawingArea.setContentWidth(size);
-        drawingArea.setContentHeight(size);
-        drawingArea.setHalign(Align.CENTER);
-        drawingArea.setValign(Align.CENTER);
+        canvas.getMainLayerGroup().blend();
 
-        drawingArea.setDrawFunc((area, cr, width, height) -> {
-            cr.setAntialias(Antialias.NONE);
-            cr.setSource(surface, 0, 0);
-            cr.paint();
-        });
+        CanvasArea canvasArea = new CanvasArea(canvas);
 
-        applicationWindow.setChild(drawingArea);
+        applicationWindow.setChild(canvasArea.getDrawingArea());
+        applicationWindow.addCssClass("pawpaint-transparent-window");
     }
 
     private void loadCssStyle() {

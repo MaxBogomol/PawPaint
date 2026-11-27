@@ -5,7 +5,7 @@ import dev.maxbogomol.paw_paint.core.color.Color;
 public class DestOverComposeMode extends ComposeMode {
     @Override
     public float blend(float src, float dest) {
-        return dest + (1.0f - dest) * src;
+        return dest + src * (1.0f - dest);
     }
 
     @Override

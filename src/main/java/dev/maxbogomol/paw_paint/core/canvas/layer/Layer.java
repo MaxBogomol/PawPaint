@@ -5,26 +5,24 @@ import dev.maxbogomol.paw_paint.core.color.Colors;
 import dev.maxbogomol.paw_paint.core.color.format.ColorFormat;
 
 public class Layer extends LayerNode {
-    private static final int TILE_SIZE = 64;
-
-    private TileMap tileMap;
-    private ColorFormat colorFormat;
-
     private int width = 0;
     private int height = 0;
     private int x = 0;
     private int y = 0;
 
     public Layer(ColorFormat colorFormat, int width, int height, String name) {
-        this.colorFormat = colorFormat;
-        this.tileMap =  createTileMap(colorFormat);
+        super(colorFormat, name);
+        this.pixelData = colorFormat.createPixelData();
         this.width = width;
         this.height = height;
-        this.name = name;
     }
 
-    public ColorFormat getColorFormat() {
-        return colorFormat;
+    public void setX(int x) {
+        this.x = x;
+    }
+
+    public void setY(int y) {
+        this.y = y;
     }
 
     public int getWidth() {
@@ -35,23 +33,30 @@ public class Layer extends LayerNode {
         return height;
     }
 
-    public void setPixel(int x, int y, Color color, byte[] pixelData) {
+    public int getX() {
+        return x;
+    }
+
+    public int getY() {
+        return y;
+    }
+
+    @Override
+    public void blend(LayerNode node) {
+        blend(node, this.x, this.y);
+    }
+
+    public void setTileMapPixel(int x, int y, Color color, byte[] pixelData) {
         if (x >= 0 && x < width && y >= 0 && y < height) {
-            colorFormat.encode(color, pixelData);
-            tileMap.setPixel(x, y, pixelData);
+            super.setPixel(x, y, color, pixelData);
         }
     }
 
-    public void getPixel(int x, int y, Color color, byte[] pixelData) {
+    public void getTileMapPixel(int x, int y, Color color, byte[] pixelData) {
         if (x >= 0 && x < width && y >= 0 && y < height) {
-            tileMap.getPixel(x, y, pixelData);
-            colorFormat.decode(color, pixelData);
+            super.setPixel(x, y, color, pixelData);
         } else {
             Colors.BLACK.copy(color);
         }
-    }
-
-    private TileMap createTileMap(ColorFormat colorFormat) {
-        return new TileMap(TILE_SIZE, colorFormat.getBytesPerPixel());
     }
 }

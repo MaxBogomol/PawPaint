@@ -19,20 +19,20 @@ public class TileMap {
     }
 
     public void setPixel(int x, int y, byte[] pixelData) {
-        int tileX = x / tileSize;
-        int tileY = y / tileSize;
-        int localX = x % tileSize;
-        int localY = y % tileSize;
+        int tileX = Math.floorDiv(x, tileSize);
+        int tileY = Math.floorDiv(y, tileSize);
+        int localX = Math.floorMod(x, tileSize);
+        int localY = Math.floorMod(y, tileSize);
         long key = getTileKey(tileX, tileY);
         Tile tile = tiles.computeIfAbsent(key, k -> new Tile(tileSize, bytesPerPixel));
         tile.setPixel(localX, localY, pixelData);
     }
 
     public void getPixel(int x, int y, byte[] pixelData) {
-        int tileX = x / tileSize;
-        int tileY = y / tileSize;
-        int localX = x % tileSize;
-        int localY = y % tileSize;
+        int tileX = Math.floorDiv(x, tileSize);
+        int tileY = Math.floorDiv(y, tileSize);
+        int localX = Math.floorMod(x, tileSize);
+        int localY = Math.floorMod(y, tileSize);
         long key = getTileKey(tileX, tileY);
         Tile tile = tiles.get(key);
         if (tile == null) {
@@ -40,5 +40,29 @@ public class TileMap {
         } else {
             tile.getPixel(localX, localY, pixelData);
         }
+    }
+
+    public void checkBounds(LayerBounds bounds) {
+        if (tiles.isEmpty()) {
+            bounds.minX = bounds.minY = 0;
+            bounds.maxX = bounds.maxY = 0;
+        } else {
+            bounds.minX = bounds.minY = Integer.MAX_VALUE;
+            bounds.maxX = bounds.maxY = Integer.MIN_VALUE;
+
+            for (long key : tiles.keySet()) {
+                int tileX = (int) (key >> 32);
+                int tileY = (int) key;
+
+                if (tileX < bounds.minX) bounds.minX = tileX;
+                if (tileX > bounds.maxX) bounds.maxX = tileX;
+                if (tileY < bounds.minY) bounds.minY = tileY;
+                if (tileY > bounds.maxY) bounds.maxY = tileY;
+            }
+        }
+    }
+
+    public int getTileSize() {
+        return tileSize;
     }
 }
