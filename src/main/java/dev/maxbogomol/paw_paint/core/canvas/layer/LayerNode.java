@@ -1,6 +1,8 @@
 package dev.maxbogomol.paw_paint.core.canvas.layer;
 
+import dev.maxbogomol.paw_paint.PawPaint;
 import dev.maxbogomol.paw_paint.core.color.Color;
+import dev.maxbogomol.paw_paint.core.color.blend.BlendContext;
 import dev.maxbogomol.paw_paint.core.color.blend.BlendMode;
 import dev.maxbogomol.paw_paint.core.color.blend.BlendModes;
 import dev.maxbogomol.paw_paint.core.color.compose.ComposeMode;
@@ -10,15 +12,6 @@ import dev.maxbogomol.paw_paint.core.color.space.ColorSpace;
 import dev.maxbogomol.paw_paint.core.color.space.ColorSpaces;
 
 public abstract class LayerNode {
-    protected byte[] pixelData;
-    protected Color color = Color.create();
-    protected Color colorSrc = Color.create();
-    protected Color colorDest = Color.create();
-    protected Color colorSrcSpace = Color.create();
-    protected Color colorDestSpace = Color.create();
-    protected LayerBounds boundsSrc = LayerBounds.create();
-    protected LayerBounds boundsDest = LayerBounds.create();
-
     protected ColorFormat colorFormat;
     protected TileMap tileMap;
 
@@ -109,20 +102,23 @@ public abstract class LayerNode {
     public abstract void blend(LayerNode node);
 
     public void blend(LayerNode node, int offsetX, int offsetY) {
-        getTileMap().checkBounds(boundsSrc);
-        node.getTileMap().checkBounds(boundsDest);
-        boundsSrc.bound(boundsDest);
-        int minX = boundsSrc.minX * Tile.TILE_SIZE + offsetX;
-        int minY = boundsSrc.minY * Tile.TILE_SIZE + offsetY;
-        int maxX = (boundsSrc.maxX + 1) * Tile.TILE_SIZE + offsetX;
-        int maxY = (boundsSrc.maxY + 1) * Tile.TILE_SIZE + offsetY;
+        BlendContext c = PawPaint.blendContext;
+        LayerBoundsContext lc = PawPaint.layerBoundsContext;
+        this.getTileMap().checkBounds(lc.src);
+        node.getTileMap().checkBounds(lc.dest);
+        lc.src.bound(lc.dest);
+        int minX = lc.src.minX * Tile.TILE_SIZE + offsetX;
+        int minY = lc.src.minY * Tile.TILE_SIZE + offsetY;
+        int maxX = (lc.src.maxX + 1) * Tile.TILE_SIZE + offsetX;
+        int maxY = (lc.src.maxY + 1) * Tile.TILE_SIZE + offsetY;
 
         for (int y = minY; y < maxY; y++) {
             for (int x = minX; x < maxX; x++) {
-                getPixel(x - offsetX, y - offsetY, colorSrc, pixelData);
-                node.getPixel(x, y, colorDest, pixelData);
-                blendMode.blend(colorSrc, colorDest, colorSrcSpace, colorDestSpace, color, composeMode, colorSpace);
-                node.setPixel(x, y, color, pixelData);
+                this.getPixel(x - offsetX, y - offsetY, c.src, c.pixelData);
+                node.getPixel(x, y, c.dest, c.pixelData);
+                c.src.a = c.src.a * opacity;
+                blendMode.blend(c, composeMode, colorSpace);
+                node.setPixel(x, y, c.out, c.pixelData);
             }
         }
     }

@@ -2,7 +2,9 @@ package dev.maxbogomol.paw_paint;
 
 import dev.maxbogomol.paw_paint.core.canvas.Canvas;
 import dev.maxbogomol.paw_paint.core.canvas.layer.Layer;
+import dev.maxbogomol.paw_paint.core.canvas.layer.LayerBoundsContext;
 import dev.maxbogomol.paw_paint.core.color.Color;
+import dev.maxbogomol.paw_paint.core.color.blend.BlendContext;
 import dev.maxbogomol.paw_paint.core.color.blend.BlendModes;
 import dev.maxbogomol.paw_paint.core.color.compose.ComposeModes;
 import dev.maxbogomol.paw_paint.core.color.format.ColorFormat;
@@ -27,6 +29,9 @@ public class PawPaint {
     private ApplicationWindow applicationWindow;
     private Label titleLabel;
     private HeaderBar headerBar;
+
+    public static BlendContext blendContext = BlendContext.create();
+    public static LayerBoundsContext layerBoundsContext = LayerBoundsContext.create();
 
     public PawPaint() {
         application = new Application(APPLICATION_ID, ApplicationFlags.DEFAULT_FLAGS);
@@ -55,6 +60,7 @@ public class PawPaint {
 
         ColorFormat colorFormat = ColorFormats.RGBA8;
         byte[] pixelData = colorFormat.createPixelData();
+        blendContext.pixelData = colorFormat.createPixelData();
         Color color1 = Color.create();
         Color color2 = Color.create();
 

@@ -5,14 +5,13 @@ import dev.maxbogomol.paw_paint.core.color.Colors;
 import dev.maxbogomol.paw_paint.core.color.format.ColorFormat;
 
 public class Layer extends LayerNode {
-    private int width = 0;
-    private int height = 0;
+    private int width;
+    private int height;
     private int x = 0;
     private int y = 0;
 
     public Layer(ColorFormat colorFormat, int width, int height, String name) {
         super(colorFormat, name);
-        this.pixelData = colorFormat.createPixelData();
         this.width = width;
         this.height = height;
     }
