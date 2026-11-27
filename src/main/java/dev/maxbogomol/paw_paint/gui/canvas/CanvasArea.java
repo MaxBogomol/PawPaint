@@ -2,21 +2,36 @@ package dev.maxbogomol.paw_paint.gui.canvas;
 
 import dev.maxbogomol.paw_paint.core.canvas.Canvas;
 import dev.maxbogomol.paw_paint.core.color.Color;
-import org.freedesktop.cairo.Antialias;
+import org.freedesktop.cairo.Context;
+import org.freedesktop.cairo.Filter;
 import org.freedesktop.cairo.Format;
 import org.freedesktop.cairo.ImageSurface;
-import org.gnome.gtk.DrawingArea;
+import org.gnome.gdk.ModifierType;
+import org.gnome.gtk.*;
 
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
+import java.util.Set;
 
 public class CanvasArea {
     private final Canvas canvas;
+
+    private final Box mainWidgetBox;
 
     private final DrawingArea drawingArea;
     private ImageSurface imageSurface;
     private byte[] pixelData;
     private Color color = Color.create();
+
+    private double canvasOffsetX = 0;
+    private double canvasOffsetY = 0;
+    private double canvasZoom = 1f;
+    private double canvasRotation = 0;
+
+    private double drawingAreaDragOffsetX = 0;
+    private double drawingAreaDragOffsetY = 0;
+    private double drawingAreaMouseX = 0;
+    private double drawingAreaMouseY = 0;
 
     public CanvasArea(Canvas canvas) {
         this.canvas = canvas;
@@ -25,15 +40,31 @@ public class CanvasArea {
         createSurface();
 
         drawingArea = new DrawingArea();
-
         drawingArea.setContentWidth(canvas.getWidth());
         drawingArea.setContentHeight(canvas.getHeight());
+        drawingArea.setHexpand(true);
+        drawingArea.setVexpand(true);
 
-        drawingArea.setDrawFunc((drawingArea, cr, width, height) -> {
-            cr.setAntialias(Antialias.NONE);
-            cr.setSource(imageSurface, 0, 0);
-            cr.paint();
-        });
+        drawingArea.setDrawFunc(this::setDrawingAreaDrawFunction);
+
+        GestureDrag gestureDrag = new GestureDrag();
+        gestureDrag.setButton(0);
+        gestureDrag.onDragBegin((startX, startY) -> onDrawingAreaDragBegin(gestureDrag, startX, startY));
+        gestureDrag.onDragUpdate((offsetX, offsetY) -> onDrawingAreaDragUpdate(gestureDrag, offsetX, offsetY));
+
+        EventControllerMotion motionController = new EventControllerMotion();
+        motionController.onMotion(this::onDrawingAreaMotion);
+
+        EventControllerScroll scrollController = new EventControllerScroll(EventControllerScrollFlags.VERTICAL);
+        scrollController.onScroll((dx, dy) -> onDrawingAreaScroll(scrollController, dx, dy));
+
+        drawingArea.addController(gestureDrag);
+        drawingArea.addController(motionController);
+        drawingArea.addController(scrollController);
+
+        mainWidgetBox = new Box(Orientation.VERTICAL, 0);
+        mainWidgetBox.append(drawingArea);
+
         blendSurface();
     }
 
@@ -87,7 +118,78 @@ public class CanvasArea {
         imageSurface.markDirty();
     }
 
-    public DrawingArea getDrawingArea() {
-        return drawingArea;
+    public Box getMainWidgetBox() {
+        return mainWidgetBox;
+    }
+
+    private void setDrawingAreaDrawFunction(DrawingArea drawingArea, Context cr, int width, int height) {
+        double centerX = width / 2f;
+        double centerY = height / 2f;
+        cr.translate(centerX + canvasOffsetX, centerY + canvasOffsetY);
+        cr.rotate(canvasRotation);
+        cr.scale(canvasZoom, canvasZoom);
+        cr.translate(-canvas.getWidth() / 2f, -canvas.getHeight() / 2f);
+        cr.setSource(imageSurface, 0, 0);
+        cr.getSource().setFilter(Filter.NEAREST);
+        cr.paint();
+    }
+
+    private void onDrawingAreaDragBegin(GestureDrag gestureDrag, double startX, double startY) {
+        int button = gestureDrag.getCurrentButton();
+        if (button == 2) {
+            drawingAreaDragOffsetX = canvasOffsetX;
+            drawingAreaDragOffsetY = canvasOffsetY;
+        }
+    }
+
+    private void onDrawingAreaDragUpdate(GestureDrag gestureDrag, double offsetX, double offsetY) {
+        int button = gestureDrag.getCurrentButton();
+        if (button == 2) {
+            canvasOffsetX = drawingAreaDragOffsetX + offsetX;
+            canvasOffsetY = drawingAreaDragOffsetY + offsetY;
+            drawingArea.queueDraw();
+        }
+    }
+
+    private void onDrawingAreaMotion(double x, double y) {
+        drawingAreaMouseX = x;
+        drawingAreaMouseY = y;
+    }
+
+    private boolean onDrawingAreaScroll(EventControllerScroll scrollController, double dx, double dy) {
+        Set<ModifierType> modifiers = scrollController.getCurrentEventState();
+
+        double centerX = drawingArea.getWidth() / 2.0f;
+        double centerY = drawingArea.getHeight() / 2.0f;
+
+        if (modifiers.contains(ModifierType.SHIFT_MASK)) {
+            double angleStep = Math.toRadians(5.0f);
+            double deltaAngle = angleStep * dy;
+
+            double relativeX = drawingAreaMouseX - (centerX + canvasOffsetX);
+            double relativeY = drawingAreaMouseY - (centerY + canvasOffsetY);
+
+            canvasOffsetX += relativeX - (relativeX * Math.cos(deltaAngle) - relativeY * Math.sin(deltaAngle));
+            canvasOffsetY += relativeY - (relativeX * Math.sin(deltaAngle) + relativeY * Math.cos(deltaAngle));
+
+            canvasRotation += deltaAngle;
+            drawingArea.queueDraw();
+        } else {
+            double zoomFactor = Math.pow(1.1, -dy);
+            double newZoom = Math.clamp(canvasZoom * zoomFactor, 0.01f, 256.0f);
+
+            if (newZoom != canvasZoom) {
+                double relativeX = drawingAreaMouseX - (centerX + canvasOffsetX);
+                double relativeY = drawingAreaMouseY - (centerY + canvasOffsetY);
+
+                double scaleRatio = newZoom / canvasZoom;
+                canvasOffsetX -= relativeX * (scaleRatio - 1.0f);
+                canvasOffsetY -= relativeY * (scaleRatio - 1.0f);
+
+                canvasZoom = newZoom;
+                drawingArea.queueDraw();
+            }
+        }
+        return true;
     }
 }

@@ -100,8 +100,8 @@ public class PawPaint {
 
         CanvasArea canvasArea = new CanvasArea(canvas);
 
-        applicationWindow.setChild(canvasArea.getDrawingArea());
-        applicationWindow.addCssClass("pawpaint-transparent-window");
+        applicationWindow.setChild(canvasArea.getMainWidgetBox());
+        //applicationWindow.addCssClass("pawpaint-transparent-window");
     }
 
     private void loadCssStyle() {

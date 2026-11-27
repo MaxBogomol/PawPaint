@@ -12,8 +12,16 @@ public class TileMap {
         this.bytesPerPixel = bytesPerPixel;
     }
 
-    private long getTileKey(int x, int y) {
+    public static long getTileKey(int x, int y) {
         return ((long) x << 32) | (Integer.toUnsignedLong(y));
+    }
+
+    public static int getTileX(long key) {
+        return (int) (key >> 32);
+    }
+
+    public static int getTileY(long key) {
+        return (int) key;
     }
 
     public void setPixel(int x, int y, byte[] pixelData) {
@@ -49,8 +57,8 @@ public class TileMap {
             bounds.maxX = bounds.maxY = Integer.MIN_VALUE;
 
             for (long key : tiles.keySet()) {
-                int tileX = (int) (key >> 32);
-                int tileY = (int) key;
+                int tileX = getTileX(key);
+                int tileY = getTileY(key);
 
                 if (tileX < bounds.minX) bounds.minX = tileX;
                 if (tileX > bounds.maxX) bounds.maxX = tileX;
