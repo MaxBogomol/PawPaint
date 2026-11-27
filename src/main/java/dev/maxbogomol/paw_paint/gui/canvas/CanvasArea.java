@@ -14,6 +14,10 @@ import java.lang.foreign.ValueLayout;
 import java.util.Set;
 
 public class CanvasArea {
+    private static final double MIN_ZOOM = 0.01f;
+    private static final double MAX_ZOOM = 256.0f;
+    private static final double MOUSE_SCROLL_ANGLE_STEP = Math.toRadians(5.0f);
+
     private final Canvas canvas;
 
     private final Box mainWidgetBox;
@@ -28,10 +32,15 @@ public class CanvasArea {
     private double canvasZoom = 1f;
     private double canvasRotation = 0;
 
+    private double drawingAreaDragStartX = 0;
+    private double drawingAreaDragStartY = 0;
     private double drawingAreaDragOffsetX = 0;
     private double drawingAreaDragOffsetY = 0;
     private double drawingAreaMouseX = 0;
     private double drawingAreaMouseY = 0;
+    private double drawingAreaDragStartAngle = 0;
+    private double drawingAreaDragRotation = 0;
+    private boolean drawingAreaDragRotating = false;
 
     public CanvasArea(Canvas canvas) {
         this.canvas = canvas;
@@ -48,12 +57,13 @@ public class CanvasArea {
         drawingArea.setDrawFunc(this::setDrawingAreaDrawFunction);
 
         GestureDrag gestureDrag = new GestureDrag();
-        gestureDrag.setButton(0);
+        gestureDrag.setButton(2);
         gestureDrag.onDragBegin((startX, startY) -> onDrawingAreaDragBegin(gestureDrag, startX, startY));
         gestureDrag.onDragUpdate((offsetX, offsetY) -> onDrawingAreaDragUpdate(gestureDrag, offsetX, offsetY));
+        gestureDrag.onDragEnd((offsetX, offsetY) -> onDrawingAreaDragEnd(gestureDrag, offsetX, offsetY));
 
         EventControllerMotion motionController = new EventControllerMotion();
-        motionController.onMotion(this::onDrawingAreaMotion);
+        motionController.onMotion((x, y) -> onDrawingAreaMotion(motionController, x, y));
 
         EventControllerScroll scrollController = new EventControllerScroll(EventControllerScrollFlags.VERTICAL);
         scrollController.onScroll((dx, dy) -> onDrawingAreaScroll(scrollController, dx, dy));
@@ -125,6 +135,7 @@ public class CanvasArea {
     private void setDrawingAreaDrawFunction(DrawingArea drawingArea, Context cr, int width, int height) {
         double centerX = width / 2f;
         double centerY = height / 2f;
+        
         cr.translate(centerX + canvasOffsetX, centerY + canvasOffsetY);
         cr.rotate(canvasRotation);
         cr.scale(canvasZoom, canvasZoom);
@@ -137,21 +148,63 @@ public class CanvasArea {
     private void onDrawingAreaDragBegin(GestureDrag gestureDrag, double startX, double startY) {
         int button = gestureDrag.getCurrentButton();
         if (button == 2) {
+            drawingAreaDragStartX = startX;
+            drawingAreaDragStartY = startY;
             drawingAreaDragOffsetX = canvasOffsetX;
             drawingAreaDragOffsetY = canvasOffsetY;
+
+            Set<ModifierType> modifiers = gestureDrag.getCurrentEventState();
+            if (modifiers.contains(ModifierType.SHIFT_MASK)) {
+                drawingAreaDragRotating = true;
+                drawingAreaDragRotation = canvasRotation;
+
+                double centerX = drawingArea.getWidth() / 2.0;
+                double centerY = drawingArea.getHeight() / 2.0;
+
+                drawingAreaDragStartAngle = Math.atan2(startY - centerY, startX - centerX);
+            } else {
+                drawingAreaDragRotating = false;
+            }
         }
     }
 
     private void onDrawingAreaDragUpdate(GestureDrag gestureDrag, double offsetX, double offsetY) {
         int button = gestureDrag.getCurrentButton();
         if (button == 2) {
-            canvasOffsetX = drawingAreaDragOffsetX + offsetX;
-            canvasOffsetY = drawingAreaDragOffsetY + offsetY;
+            if (drawingAreaDragRotating) {
+                double centerX = drawingArea.getWidth() / 2.0f;
+                double centerY = drawingArea.getHeight() / 2.0f;
+                double currentX = drawingAreaDragStartX + offsetX;
+                double currentY = drawingAreaDragStartY + offsetY;
+
+                double currentAngle = Math.atan2(currentY - centerY, currentX - centerX);
+                double newRotation = drawingAreaDragRotation + (currentAngle - drawingAreaDragStartAngle);
+                double deltaAngle = newRotation - drawingAreaDragRotation;
+
+                double canvasCenterX = centerX + drawingAreaDragOffsetX;
+                double canvasCenterY = centerY + drawingAreaDragOffsetY;
+                double relativeX = canvasCenterX - drawingAreaDragStartX;
+                double relativeY = canvasCenterY - drawingAreaDragStartY;
+
+                double rotatedCenterX = drawingAreaDragStartX + (relativeX * Math.cos(deltaAngle) - relativeY * Math.sin(deltaAngle));
+                double rotatedCenterY = drawingAreaDragStartY + (relativeX * Math.sin(deltaAngle) + relativeY * Math.cos(deltaAngle));
+
+                canvasOffsetX = rotatedCenterX - centerX;
+                canvasOffsetY = rotatedCenterY - centerY;
+                canvasRotation = newRotation;
+            } else {
+                canvasOffsetX = drawingAreaDragOffsetX + offsetX;
+                canvasOffsetY = drawingAreaDragOffsetY + offsetY;
+            }
             drawingArea.queueDraw();
         }
     }
 
-    private void onDrawingAreaMotion(double x, double y) {
+    private void onDrawingAreaDragEnd(GestureDrag gestureDrag, double offsetX, double offsetY) {
+        drawingAreaDragRotating = false;
+    }
+
+    private void onDrawingAreaMotion(EventControllerMotion motionController, double x, double y) {
         drawingAreaMouseX = x;
         drawingAreaMouseY = y;
     }
@@ -162,32 +215,34 @@ public class CanvasArea {
         double centerX = drawingArea.getWidth() / 2.0f;
         double centerY = drawingArea.getHeight() / 2.0f;
 
-        if (modifiers.contains(ModifierType.SHIFT_MASK)) {
-            double angleStep = Math.toRadians(5.0f);
-            double deltaAngle = angleStep * dy;
+        if (!drawingAreaDragRotating) {
+            if (modifiers.contains(ModifierType.SHIFT_MASK)) {
+                double deltaAngle = MOUSE_SCROLL_ANGLE_STEP * dy;
 
-            double relativeX = drawingAreaMouseX - (centerX + canvasOffsetX);
-            double relativeY = drawingAreaMouseY - (centerY + canvasOffsetY);
-
-            canvasOffsetX += relativeX - (relativeX * Math.cos(deltaAngle) - relativeY * Math.sin(deltaAngle));
-            canvasOffsetY += relativeY - (relativeX * Math.sin(deltaAngle) + relativeY * Math.cos(deltaAngle));
-
-            canvasRotation += deltaAngle;
-            drawingArea.queueDraw();
-        } else {
-            double zoomFactor = Math.pow(1.1, -dy);
-            double newZoom = Math.clamp(canvasZoom * zoomFactor, 0.01f, 256.0f);
-
-            if (newZoom != canvasZoom) {
                 double relativeX = drawingAreaMouseX - (centerX + canvasOffsetX);
                 double relativeY = drawingAreaMouseY - (centerY + canvasOffsetY);
 
-                double scaleRatio = newZoom / canvasZoom;
-                canvasOffsetX -= relativeX * (scaleRatio - 1.0f);
-                canvasOffsetY -= relativeY * (scaleRatio - 1.0f);
+                canvasOffsetX += relativeX - (relativeX * Math.cos(deltaAngle) - relativeY * Math.sin(deltaAngle));
+                canvasOffsetY += relativeY - (relativeX * Math.sin(deltaAngle) + relativeY * Math.cos(deltaAngle));
 
-                canvasZoom = newZoom;
+                canvasRotation += deltaAngle;
                 drawingArea.queueDraw();
+            } else {
+                double zoomFactor = Math.pow(1.1, -dy);
+                double newZoom = Math.clamp(canvasZoom * zoomFactor, MIN_ZOOM, MAX_ZOOM);
+
+                if (newZoom != canvasZoom) {
+                    double scaleRatio = newZoom / canvasZoom;
+
+                    double relativeX = drawingAreaMouseX - (centerX + canvasOffsetX);
+                    double relativeY = drawingAreaMouseY - (centerY + canvasOffsetY);
+
+                    canvasOffsetX -= relativeX * (scaleRatio - 1.0f);
+                    canvasOffsetY -= relativeY * (scaleRatio - 1.0f);
+
+                    canvasZoom = newZoom;
+                    drawingArea.queueDraw();
+                }
             }
         }
         return true;
