@@ -38,15 +38,15 @@ public class CanvasArea {
     private double canvasZoom = 1f;
     private double canvasRotation = 0;
 
-    private double drawingAreaDragStartX = 0;
-    private double drawingAreaDragStartY = 0;
-    private double drawingAreaDragOffsetX = 0;
-    private double drawingAreaDragOffsetY = 0;
-    private double drawingAreaMouseX = 0;
-    private double drawingAreaMouseY = 0;
-    private double drawingAreaDragStartAngle = 0;
-    private double drawingAreaDragRotation = 0;
-    private boolean drawingAreaDragRotating = false;
+    private double mouseX = 0;
+    private double mouseY = 0;
+    private double dragStartX = 0;
+    private double dragStartY = 0;
+    private double dragOffsetX = 0;
+    private double dragOffsetY = 0;
+    private double dragStartAngle = 0;
+    private double dragRotation = 0;
+    private boolean dragRotating = false;
 
     public CanvasArea(Canvas canvas) {
         this.canvas = canvas;
@@ -62,15 +62,15 @@ public class CanvasArea {
 
         GestureDrag gestureDrag = new GestureDrag();
         gestureDrag.setButton(2);
-        gestureDrag.onDragBegin((startX, startY) -> onDrawingAreaDragBegin(gestureDrag, startX, startY));
-        gestureDrag.onDragUpdate((offsetX, offsetY) -> onDrawingAreaDragUpdate(gestureDrag, offsetX, offsetY));
-        gestureDrag.onDragEnd((offsetX, offsetY) -> onDrawingAreaDragEnd(gestureDrag, offsetX, offsetY));
+        gestureDrag.onDragBegin((startX, startY) -> onCanvasDragBegin(gestureDrag, startX, startY));
+        gestureDrag.onDragUpdate((offsetX, offsetY) -> onCanvasAreaDragUpdate(gestureDrag, offsetX, offsetY));
+        gestureDrag.onDragEnd((offsetX, offsetY) -> onCanvasDragEnd(gestureDrag, offsetX, offsetY));
 
         EventControllerMotion motionController = new EventControllerMotion();
-        motionController.onMotion((x, y) -> onDrawingAreaMotion(motionController, x, y));
+        motionController.onMotion((x, y) -> onCanvasMotion(motionController, x, y));
 
         EventControllerScroll scrollController = new EventControllerScroll(EventControllerScrollFlags.VERTICAL);
-        scrollController.onScroll((dx, dy) -> onDrawingAreaScroll(scrollController, dx, dy));
+        scrollController.onScroll((dx, dy) -> onCanvasScroll(scrollController, dx, dy));
 
         drawingArea.addController(gestureDrag);
         drawingArea.addController(motionController);
@@ -188,7 +188,7 @@ public class CanvasArea {
     private void setDrawingAreaDrawFunction(DrawingArea drawingArea, Context cr, int width, int height) {
         double centerX = width / 2f;
         double centerY = height / 2f;
-        
+
         cr.translate(centerX + canvasOffsetX, centerY + canvasOffsetY);
         cr.rotate(canvasRotation);
         cr.scale(canvasZoom, canvasZoom);
@@ -215,52 +215,52 @@ public class CanvasArea {
         }
     }
 
-    private void onDrawingAreaDragBegin(GestureDrag gestureDrag, double startX, double startY) {
+    private void onCanvasDragBegin(GestureDrag gestureDrag, double startX, double startY) {
         int button = gestureDrag.getCurrentButton();
         if (button == 2) {
-            drawingAreaDragStartX = startX;
-            drawingAreaDragStartY = startY;
-            drawingAreaDragOffsetX = canvasOffsetX;
-            drawingAreaDragOffsetY = canvasOffsetY;
+            dragStartX = startX;
+            dragStartY = startY;
+            dragOffsetX = canvasOffsetX;
+            dragOffsetY = canvasOffsetY;
 
             Set<ModifierType> modifiers = gestureDrag.getCurrentEventState();
             if (modifiers.contains(ModifierType.SHIFT_MASK)) {
-                drawingAreaDragRotating = true;
-                drawingAreaDragRotation = canvasRotation;
+                dragRotating = true;
+                dragRotation = canvasRotation;
 
                 double centerX = drawingArea.getWidth() / 2.0f;
                 double centerY = drawingArea.getHeight() / 2.0f;
 
-                drawingAreaDragStartAngle = Math.atan2(startY - centerY, startX - centerX);
+                dragStartAngle = Math.atan2(startY - centerY, startX - centerX);
             } else {
-                drawingAreaDragRotating = false;
+                dragRotating = false;
             }
         }
     }
 
-    private void onDrawingAreaDragUpdate(GestureDrag gestureDrag, double offsetX, double offsetY) {
+    private void onCanvasAreaDragUpdate(GestureDrag gestureDrag, double offsetX, double offsetY) {
         int button = gestureDrag.getCurrentButton();
         if (button == 2) {
-            if (drawingAreaDragRotating) {
+            if (dragRotating) {
                 Set<ModifierType> modifiers = gestureDrag.getCurrentEventState();
                 boolean lockRotation = modifiers.contains(ModifierType.CONTROL_MASK);
                 boolean centerPivot = modifiers.contains(ModifierType.ALT_MASK);
 
                 double centerX = drawingArea.getWidth() / 2.0f;
                 double centerY = drawingArea.getHeight() / 2.0f;
-                double currentX = drawingAreaDragStartX + offsetX;
-                double currentY = drawingAreaDragStartY + offsetY;
+                double currentX = dragStartX + offsetX;
+                double currentY = dragStartY + offsetY;
 
                 double currentAngle = Math.atan2(currentY - centerY, currentX - centerX);
-                double newRotation = drawingAreaDragRotation + (currentAngle - drawingAreaDragStartAngle);
+                double newRotation = dragRotation + (currentAngle - dragStartAngle);
                 if (lockRotation) newRotation = Math.round(newRotation / ROTATION_ANGLE_LOCK) * ROTATION_ANGLE_LOCK;
 
-                double deltaAngle = newRotation - drawingAreaDragRotation;
+                double deltaAngle = newRotation - dragRotation;
 
-                double pivotX = centerPivot ? centerX : drawingAreaDragStartX;
-                double pivotY = centerPivot ? centerY : drawingAreaDragStartY;
-                double canvasCenterX = centerX + drawingAreaDragOffsetX;
-                double canvasCenterY = centerY + drawingAreaDragOffsetY;
+                double pivotX = centerPivot ? centerX : dragStartX;
+                double pivotY = centerPivot ? centerY : dragStartY;
+                double canvasCenterX = centerX + dragOffsetX;
+                double canvasCenterY = centerY + dragOffsetY;
                 double relativeX = canvasCenterX - pivotX;
                 double relativeY = canvasCenterY - pivotY;
 
@@ -273,26 +273,26 @@ public class CanvasArea {
 
                 canvasRotation = newRotation;
             } else {
-                canvasOffsetX = drawingAreaDragOffsetX + offsetX;
-                canvasOffsetY = drawingAreaDragOffsetY + offsetY;
+                canvasOffsetX = dragOffsetX + offsetX;
+                canvasOffsetY = dragOffsetY + offsetY;
                 clampCanvasOffset();
             }
             updateDrawingArea();
         }
     }
 
-    private void onDrawingAreaDragEnd(GestureDrag gestureDrag, double offsetX, double offsetY) {
-        drawingAreaDragRotating = false;
+    private void onCanvasDragEnd(GestureDrag gestureDrag, double offsetX, double offsetY) {
+        dragRotating = false;
     }
 
-    private void onDrawingAreaMotion(EventControllerMotion motionController, double x, double y) {
-        drawingAreaMouseX = x;
-        drawingAreaMouseY = y;
+    private void onCanvasMotion(EventControllerMotion motionController, double x, double y) {
+        mouseX = x;
+        mouseY = y;
     }
 
-    private boolean onDrawingAreaScroll(EventControllerScroll scrollController, double dx, double dy) {
+    private boolean onCanvasScroll(EventControllerScroll scrollController, double dx, double dy) {
         Set<ModifierType> modifiers = scrollController.getCurrentEventState();
-        if (!drawingAreaDragRotating && !modifiers.contains(ModifierType.BUTTON2_MASK)) {
+        if (!dragRotating && !modifiers.contains(ModifierType.BUTTON2_MASK)) {
             double centerX = drawingArea.getWidth() / 2.0f;
             double centerY = drawingArea.getHeight() / 2.0f;
 
@@ -303,8 +303,8 @@ public class CanvasArea {
 
                 double deltaAngle = (lockRotation ? ROTATION_ANGLE_LOCK : MOUSE_SCROLL_ANGLE_STEP) * dy;
 
-                double pivotX = centerPivot ? centerX : drawingAreaMouseX;
-                double pivotY = centerPivot ? centerY : drawingAreaMouseY;
+                double pivotX = centerPivot ? centerX : mouseX;
+                double pivotY = centerPivot ? centerY : mouseY;
                 double relativeX = pivotX - (centerX + canvasOffsetX);
                 double relativeY = pivotY - (centerY + canvasOffsetY);
 
@@ -323,8 +323,8 @@ public class CanvasArea {
                 if (newZoom != canvasZoom) {
                     double scaleRatio = newZoom / canvasZoom;
 
-                    double pivotX = centerPivot ? centerX : drawingAreaMouseX;
-                    double pivotY = centerPivot ? centerY : drawingAreaMouseY;
+                    double pivotX = centerPivot ? centerX : mouseX;
+                    double pivotY = centerPivot ? centerY : mouseY;
                     double relativeX = pivotX - (centerX + canvasOffsetX);
                     double relativeY = pivotY - (centerY + canvasOffsetY);
 
