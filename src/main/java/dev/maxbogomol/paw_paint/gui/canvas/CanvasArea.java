@@ -228,8 +228,8 @@ public class CanvasArea {
                 drawingAreaDragRotating = true;
                 drawingAreaDragRotation = canvasRotation;
 
-                double centerX = drawingArea.getWidth() / 2.0;
-                double centerY = drawingArea.getHeight() / 2.0;
+                double centerX = drawingArea.getWidth() / 2.0f;
+                double centerY = drawingArea.getHeight() / 2.0f;
 
                 drawingAreaDragStartAngle = Math.atan2(startY - centerY, startX - centerX);
             } else {
@@ -317,7 +317,7 @@ public class CanvasArea {
 
                 updateDrawingArea();
             } else {
-                double zoomFactor = Math.pow(1.1, -dy);
+                double zoomFactor = Math.pow(1.1f, -dy);
                 double newZoom = Math.clamp(canvasZoom * zoomFactor, MIN_ZOOM, MAX_ZOOM);
 
                 if (newZoom != canvasZoom) {

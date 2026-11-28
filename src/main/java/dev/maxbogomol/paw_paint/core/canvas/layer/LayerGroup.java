@@ -12,6 +12,10 @@ public class LayerGroup extends LayerNode {
         super(colorFormat, name);
     }
 
+    public List<LayerNode> getLayerNodes() {
+        return layerNodes;
+    }
+
     public void addNode(LayerNode layerNode) {
         layerNodes.add(layerNode);
     }
