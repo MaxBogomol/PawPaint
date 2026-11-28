@@ -13,16 +13,16 @@ public class LayersDockPanel implements IDockPanel {
 
     private final Box box;
 
-    private final Box tabsBarBox;
+    private final Box rowsBox;
 
     public LayersDockPanel() {
         box = new Box(Orientation.HORIZONTAL, 0);
         box.setHexpand(true);
         box.setVexpand(true);
 
-        tabsBarBox = new Box(Orientation.VERTICAL, 4);
+        rowsBox = new Box(Orientation.VERTICAL, 4);
 
-        box.append(tabsBarBox);
+        box.append(rowsBox);
     }
 
     @Override
@@ -42,10 +42,10 @@ public class LayersDockPanel implements IDockPanel {
 
     public void setCanvas(Canvas canvas) {
         this.canvas = canvas;
-        recreateTabs();
+        recreateRows();
     }
 
-    private void createTab(LayerNode layerNode, int depth) {
+    private void createRow(LayerNode layerNode, int depth) {
         Box rowBox = new Box(Orientation.HORIZONTAL, 4);
         rowBox.setMarginStart(depth * 8);
 
@@ -65,29 +65,29 @@ public class LayersDockPanel implements IDockPanel {
         rowBox.append(visibleButton);
         rowBox.append(nameLabel);
 
-        tabsBarBox.append(rowBox);
+        rowsBox.append(rowBox);
     }
 
-    private void createTabs(LayerGroup group, int depth) {
+    private void createRows(LayerGroup group, int depth) {
         List<LayerNode> nodes = group.getLayerNodes();
         for (int i = nodes.size() - 1; i >= 0; i--) {
             LayerNode node = nodes.get(i);
-            createTab(node, depth);
+            createRow(node, depth);
 
             if (node instanceof LayerGroup subGroup) {
-                createTabs(subGroup, depth + 1);
+                createRows(subGroup, depth + 1);
             }
         }
     }
 
-    private void recreateTabs() {
+    private void recreateRows() {
         Widget child;
-        while ((child = tabsBarBox.getFirstChild()) != null) {
-            tabsBarBox.remove(child);
+        while ((child = rowsBox.getFirstChild()) != null) {
+            rowsBox.remove(child);
         }
 
         if (canvas != null) {
-            createTabs(canvas.getMainLayerGroup(), 0);
+            createRows(canvas.getMainLayerGroup(), 0);
         }
     }
 }
