@@ -16,6 +16,7 @@ import java.util.Set;
 public class CanvasArea {
     private static final double MIN_ZOOM = 0.01f;
     private static final double MAX_ZOOM = 256.0f;
+    private static final double ZOOM_CLAMP_OFFSET = 128.0f;
     private static final double ROTATION_ANGLE_LOCK = Math.toRadians(15.0f);
     private static final double MOUSE_SCROLL_ANGLE_STEP = Math.toRadians(5.0f);
     private static final int BACKGROUND_PATTERN_CELL_SIZE = 32;
@@ -121,6 +122,18 @@ public class CanvasArea {
 
     public Box getMainWidgetBox() {
         return mainWidgetBox;
+    }
+
+    private void clampCanvasOffset() {
+        double baseMaxOffsetX = Math.max(0.0f, (drawingArea.getWidth() / 2.0f) - ZOOM_CLAMP_OFFSET);
+        double baseMaxOffsetY = Math.max(0.0f, (drawingArea.getHeight() / 2.0f) - ZOOM_CLAMP_OFFSET);
+
+        double zoomScale = canvasZoom / MIN_ZOOM;
+        double maxOffsetX = baseMaxOffsetX * zoomScale;
+        double maxOffsetY = baseMaxOffsetY * zoomScale;
+
+        canvasOffsetX = Math.clamp(canvasOffsetX, -maxOffsetX, maxOffsetX);
+        canvasOffsetY = Math.clamp(canvasOffsetY, -maxOffsetY, maxOffsetY);
     }
 
     private void blendSurface() {
@@ -252,11 +265,13 @@ public class CanvasArea {
 
                 canvasOffsetX = rotatedCenterX - centerX;
                 canvasOffsetY = rotatedCenterY - centerY;
+                clampCanvasOffset();
 
                 canvasRotation = newRotation;
             } else {
                 canvasOffsetX = drawingAreaDragOffsetX + offsetX;
                 canvasOffsetY = drawingAreaDragOffsetY + offsetY;
+                clampCanvasOffset();
             }
             drawingArea.queueDraw();
         }
@@ -277,9 +292,10 @@ public class CanvasArea {
             double centerX = drawingArea.getWidth() / 2.0f;
             double centerY = drawingArea.getHeight() / 2.0f;
 
+            boolean centerPivot = modifiers.contains(ModifierType.ALT_MASK);
+
             if (modifiers.contains(ModifierType.SHIFT_MASK)) {
                 boolean lockRotation = modifiers.contains(ModifierType.CONTROL_MASK);
-                boolean centerPivot = modifiers.contains(ModifierType.ALT_MASK);
 
                 double deltaAngle = (lockRotation ? ROTATION_ANGLE_LOCK : MOUSE_SCROLL_ANGLE_STEP) * dy;
 
@@ -290,6 +306,7 @@ public class CanvasArea {
 
                 canvasOffsetX += relativeX - (relativeX * Math.cos(deltaAngle) - relativeY * Math.sin(deltaAngle));
                 canvasOffsetY += relativeY - (relativeX * Math.sin(deltaAngle) + relativeY * Math.cos(deltaAngle));
+                clampCanvasOffset();
 
                 canvasRotation += deltaAngle;
                 if (lockRotation) canvasRotation = Math.round(canvasRotation / ROTATION_ANGLE_LOCK) * ROTATION_ANGLE_LOCK;
@@ -302,13 +319,17 @@ public class CanvasArea {
                 if (newZoom != canvasZoom) {
                     double scaleRatio = newZoom / canvasZoom;
 
-                    double relativeX = drawingAreaMouseX - (centerX + canvasOffsetX);
-                    double relativeY = drawingAreaMouseY - (centerY + canvasOffsetY);
+                    double pivotX = centerPivot ? centerX : drawingAreaMouseX;
+                    double pivotY = centerPivot ? centerY : drawingAreaMouseY;
+                    double relativeX = pivotX - (centerX + canvasOffsetX);
+                    double relativeY = pivotY - (centerY + canvasOffsetY);
 
                     canvasOffsetX -= relativeX * (scaleRatio - 1.0f);
                     canvasOffsetY -= relativeY * (scaleRatio - 1.0f);
 
                     canvasZoom = newZoom;
+
+                    clampCanvasOffset();
                     
                     drawingArea.queueDraw();
                 }
