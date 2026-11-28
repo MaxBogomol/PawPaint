@@ -79,13 +79,13 @@ public class CanvasArea {
         mainWidgetBox = new Box(Orientation.VERTICAL, 0);
         mainWidgetBox.append(drawingArea);
 
-        createSurface();
+        createImageSurface();
         createBackgroundPattern();
 
         blendSurface();
     }
 
-    private void createSurface() {
+    private void createImageSurface() {
         boolean intSurface = canvas.getColorFormat().getBitDepth() <= 8;
         imageSurface = ImageSurface.create(intSurface ? Format.ARGB32 : Format.RGBA128F, canvas.getWidth(), canvas.getHeight());
 
@@ -122,18 +122,6 @@ public class CanvasArea {
 
     public Box getMainWidgetBox() {
         return mainWidgetBox;
-    }
-
-    private void clampCanvasOffset() {
-        double baseMaxOffsetX = Math.max(0.0f, (drawingArea.getWidth() / 2.0f) - ZOOM_CLAMP_OFFSET);
-        double baseMaxOffsetY = Math.max(0.0f, (drawingArea.getHeight() / 2.0f) - ZOOM_CLAMP_OFFSET);
-
-        double zoomScale = canvasZoom / MIN_ZOOM;
-        double maxOffsetX = baseMaxOffsetX * zoomScale;
-        double maxOffsetY = baseMaxOffsetY * zoomScale;
-
-        canvasOffsetX = Math.clamp(canvasOffsetX, -maxOffsetX, maxOffsetX);
-        canvasOffsetY = Math.clamp(canvasOffsetY, -maxOffsetY, maxOffsetY);
     }
 
     private void blendSurface() {
@@ -179,6 +167,22 @@ public class CanvasArea {
             }
         }
         imageSurface.markDirty();
+    }
+
+    private void clampCanvasOffset() {
+        double baseMaxOffsetX = Math.max(0.0f, (drawingArea.getWidth() / 2.0f) - ZOOM_CLAMP_OFFSET);
+        double baseMaxOffsetY = Math.max(0.0f, (drawingArea.getHeight() / 2.0f) - ZOOM_CLAMP_OFFSET);
+
+        double zoomScale = canvasZoom / MIN_ZOOM;
+        double maxOffsetX = baseMaxOffsetX * zoomScale;
+        double maxOffsetY = baseMaxOffsetY * zoomScale;
+
+        canvasOffsetX = Math.clamp(canvasOffsetX, -maxOffsetX, maxOffsetX);
+        canvasOffsetY = Math.clamp(canvasOffsetY, -maxOffsetY, maxOffsetY);
+    }
+
+    private void updateDrawingArea() {
+        drawingArea.queueDraw();
     }
 
     private void setDrawingAreaDrawFunction(DrawingArea drawingArea, Context cr, int width, int height) {
@@ -273,7 +277,7 @@ public class CanvasArea {
                 canvasOffsetY = drawingAreaDragOffsetY + offsetY;
                 clampCanvasOffset();
             }
-            drawingArea.queueDraw();
+            updateDrawingArea();
         }
     }
 
@@ -311,7 +315,7 @@ public class CanvasArea {
                 canvasRotation += deltaAngle;
                 if (lockRotation) canvasRotation = Math.round(canvasRotation / ROTATION_ANGLE_LOCK) * ROTATION_ANGLE_LOCK;
 
-                drawingArea.queueDraw();
+                updateDrawingArea();
             } else {
                 double zoomFactor = Math.pow(1.1, -dy);
                 double newZoom = Math.clamp(canvasZoom * zoomFactor, MIN_ZOOM, MAX_ZOOM);
@@ -330,8 +334,7 @@ public class CanvasArea {
                     canvasZoom = newZoom;
 
                     clampCanvasOffset();
-                    
-                    drawingArea.queueDraw();
+                    updateDrawingArea();
                 }
             }
         }
