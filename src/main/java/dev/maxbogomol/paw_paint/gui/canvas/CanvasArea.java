@@ -225,6 +225,10 @@ public class CanvasArea {
         int button = gestureDrag.getCurrentButton();
         if (button == 2) {
             if (drawingAreaDragRotating) {
+                Set<ModifierType> modifiers = gestureDrag.getCurrentEventState();
+                boolean lockRotation = modifiers.contains(ModifierType.CONTROL_MASK);
+                boolean centerPivot = modifiers.contains(ModifierType.ALT_MASK);
+
                 double centerX = drawingArea.getWidth() / 2.0f;
                 double centerY = drawingArea.getHeight() / 2.0f;
                 double currentX = drawingAreaDragStartX + offsetX;
@@ -232,24 +236,23 @@ public class CanvasArea {
 
                 double currentAngle = Math.atan2(currentY - centerY, currentX - centerX);
                 double newRotation = drawingAreaDragRotation + (currentAngle - drawingAreaDragStartAngle);
-
-                Set<ModifierType> modifiers = gestureDrag.getCurrentEventState();
-                if (modifiers.contains(ModifierType.CONTROL_MASK)) {
-                    newRotation = Math.round(newRotation / ROTATION_ANGLE_LOCK) * ROTATION_ANGLE_LOCK;
-                }
+                if (lockRotation) newRotation = Math.round(newRotation / ROTATION_ANGLE_LOCK) * ROTATION_ANGLE_LOCK;
 
                 double deltaAngle = newRotation - drawingAreaDragRotation;
 
+                double pivotX = centerPivot ? centerX : drawingAreaDragStartX;
+                double pivotY = centerPivot ? centerY : drawingAreaDragStartY;
                 double canvasCenterX = centerX + drawingAreaDragOffsetX;
                 double canvasCenterY = centerY + drawingAreaDragOffsetY;
-                double relativeX = canvasCenterX - drawingAreaDragStartX;
-                double relativeY = canvasCenterY - drawingAreaDragStartY;
+                double relativeX = canvasCenterX - pivotX;
+                double relativeY = canvasCenterY - pivotY;
 
-                double rotatedCenterX = drawingAreaDragStartX + (relativeX * Math.cos(deltaAngle) - relativeY * Math.sin(deltaAngle));
-                double rotatedCenterY = drawingAreaDragStartY + (relativeX * Math.sin(deltaAngle) + relativeY * Math.cos(deltaAngle));
+                double rotatedCenterX = pivotX + (relativeX * Math.cos(deltaAngle) - relativeY * Math.sin(deltaAngle));
+                double rotatedCenterY = pivotY + (relativeX * Math.sin(deltaAngle) + relativeY * Math.cos(deltaAngle));
 
                 canvasOffsetX = rotatedCenterX - centerX;
                 canvasOffsetY = rotatedCenterY - centerY;
+
                 canvasRotation = newRotation;
             } else {
                 canvasOffsetX = drawingAreaDragOffsetX + offsetX;
@@ -269,24 +272,27 @@ public class CanvasArea {
     }
 
     private boolean onDrawingAreaScroll(EventControllerScroll scrollController, double dx, double dy) {
-        if (!drawingAreaDragRotating) {
-            Set<ModifierType> modifiers = scrollController.getCurrentEventState();
-
+        Set<ModifierType> modifiers = scrollController.getCurrentEventState();
+        if (!drawingAreaDragRotating && !modifiers.contains(ModifierType.BUTTON2_MASK)) {
             double centerX = drawingArea.getWidth() / 2.0f;
             double centerY = drawingArea.getHeight() / 2.0f;
 
             if (modifiers.contains(ModifierType.SHIFT_MASK)) {
-                boolean lock = modifiers.contains(ModifierType.CONTROL_MASK);
-                double deltaAngle = (lock ? ROTATION_ANGLE_LOCK : MOUSE_SCROLL_ANGLE_STEP) * dy;
+                boolean lockRotation = modifiers.contains(ModifierType.CONTROL_MASK);
+                boolean centerPivot = modifiers.contains(ModifierType.ALT_MASK);
 
-                double relativeX = drawingAreaMouseX - (centerX + canvasOffsetX);
-                double relativeY = drawingAreaMouseY - (centerY + canvasOffsetY);
+                double deltaAngle = (lockRotation ? ROTATION_ANGLE_LOCK : MOUSE_SCROLL_ANGLE_STEP) * dy;
+
+                double pivotX = centerPivot ? centerX : drawingAreaMouseX;
+                double pivotY = centerPivot ? centerY : drawingAreaMouseY;
+                double relativeX = pivotX - (centerX + canvasOffsetX);
+                double relativeY = pivotY - (centerY + canvasOffsetY);
 
                 canvasOffsetX += relativeX - (relativeX * Math.cos(deltaAngle) - relativeY * Math.sin(deltaAngle));
                 canvasOffsetY += relativeY - (relativeX * Math.sin(deltaAngle) + relativeY * Math.cos(deltaAngle));
 
                 canvasRotation += deltaAngle;
-                if (lock) canvasRotation = Math.round(canvasRotation / ROTATION_ANGLE_LOCK) * ROTATION_ANGLE_LOCK;
+                if (lockRotation) canvasRotation = Math.round(canvasRotation / ROTATION_ANGLE_LOCK) * ROTATION_ANGLE_LOCK;
 
                 drawingArea.queueDraw();
             } else {
