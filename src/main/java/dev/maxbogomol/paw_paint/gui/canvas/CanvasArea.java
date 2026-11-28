@@ -2,13 +2,13 @@ package dev.maxbogomol.paw_paint.gui.canvas;
 
 import dev.maxbogomol.paw_paint.core.canvas.Canvas;
 import dev.maxbogomol.paw_paint.core.color.Color;
-import org.freedesktop.cairo.Context;
+import dev.maxbogomol.paw_paint.core.color.Colors;
+import org.freedesktop.cairo.*;
 import org.freedesktop.cairo.Filter;
-import org.freedesktop.cairo.Format;
-import org.freedesktop.cairo.ImageSurface;
 import org.gnome.gdk.ModifierType;
 import org.gnome.gtk.*;
 
+import java.io.IOException;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
 import java.util.Set;
@@ -18,6 +18,7 @@ public class CanvasArea {
     private static final double MAX_ZOOM = 256.0f;
     private static final double ROTATION_ANGLE_LOCK = Math.toRadians(15.0f);
     private static final double MOUSE_SCROLL_ANGLE_STEP = Math.toRadians(5.0f);
+    private static final int BACKGROUND_PATTERN_CELL_SIZE = 32;
 
     private final Canvas canvas;
 
@@ -27,6 +28,9 @@ public class CanvasArea {
     private ImageSurface imageSurface;
     private byte[] pixelData;
     private Color color = Color.create();
+
+    private SurfacePattern imagePattern;
+    private SurfacePattern backgroundPattern;
 
     private double canvasOffsetX = 0;
     private double canvasOffsetY = 0;
@@ -46,8 +50,6 @@ public class CanvasArea {
     public CanvasArea(Canvas canvas) {
         this.canvas = canvas;
         this.pixelData = canvas.getColorFormat().createPixelData();
-
-        createSurface();
 
         drawingArea = new DrawingArea();
         drawingArea.setContentWidth(canvas.getWidth());
@@ -76,12 +78,49 @@ public class CanvasArea {
         mainWidgetBox = new Box(Orientation.VERTICAL, 0);
         mainWidgetBox.append(drawingArea);
 
+        createSurface();
+        createBackgroundPattern();
+
         blendSurface();
     }
 
     private void createSurface() {
         boolean intSurface = canvas.getColorFormat().getBitDepth() <= 8;
         imageSurface = ImageSurface.create(intSurface ? Format.ARGB32 : Format.RGBA128F, canvas.getWidth(), canvas.getHeight());
+
+        imagePattern = SurfacePattern.create(imageSurface);
+        imagePattern.setExtend(Extend.REPEAT);
+    }
+
+    private void createBackgroundPattern() {
+        int cellSize = BACKGROUND_PATTERN_CELL_SIZE;
+        int patternSize = cellSize * 2;
+
+        ImageSurface patternSurface = ImageSurface.create(Format.RGB24, patternSize, patternSize);
+        Context cr = null;
+        try {
+            cr = Context.create(patternSurface);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        cr.setSourceRGB(Colors.WHITE.getRed(), Colors.WHITE.getGreen(), Colors.WHITE.getBlue());
+        cr.rectangle(0, 0, cellSize, cellSize);
+        cr.rectangle(cellSize, cellSize, cellSize, cellSize);
+        cr.fill();
+
+        cr.setSourceRGB(Colors.LIGHT_GRAY.getRed(), Colors.LIGHT_GRAY.getGreen(), Colors.LIGHT_GRAY.getBlue());
+        cr.rectangle(cellSize, 0, cellSize, cellSize);
+        cr.rectangle(0, cellSize, cellSize, cellSize);
+        cr.fill();
+
+        backgroundPattern = SurfacePattern.create(patternSurface);
+        backgroundPattern.setExtend(Extend.REPEAT);
+        backgroundPattern.setFilter(Filter.NEAREST);
+    }
+
+    public Box getMainWidgetBox() {
+        return mainWidgetBox;
     }
 
     private void blendSurface() {
@@ -129,10 +168,6 @@ public class CanvasArea {
         imageSurface.markDirty();
     }
 
-    public Box getMainWidgetBox() {
-        return mainWidgetBox;
-    }
-
     private void setDrawingAreaDrawFunction(DrawingArea drawingArea, Context cr, int width, int height) {
         double centerX = width / 2f;
         double centerY = height / 2f;
@@ -141,9 +176,26 @@ public class CanvasArea {
         cr.rotate(canvasRotation);
         cr.scale(canvasZoom, canvasZoom);
         cr.translate(-canvas.getWidth() / 2f, -canvas.getHeight() / 2f);
-        cr.setSource(imageSurface, 0, 0);
-        cr.getSource().setFilter(Filter.NEAREST);
+
+        cr.save();
+        cr.rectangle(0, 0, canvas.getWidth(), canvas.getHeight());
+        cr.clip();
+        cr.identityMatrix();
+        cr.setSource(backgroundPattern);
         cr.paint();
+        cr.restore();
+
+        if (true) {
+            cr.setSource(imageSurface, 0, 0);
+            cr.getSource().setFilter(Filter.NEAREST);
+            cr.paint();
+        } else {
+            cr.save();
+            cr.setSource(imagePattern);
+            cr.getSource().setFilter(Filter.NEAREST);
+            cr.paint();
+            cr.restore();
+        }
     }
 
     private void onDrawingAreaDragBegin(GestureDrag gestureDrag, double startX, double startY) {
